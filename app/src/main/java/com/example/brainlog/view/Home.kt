@@ -6,13 +6,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.layout.ContentScale
+import com.example.brainlog.R
+
 
 
 @Composable
-fun Home() {
+fun Home(modifier: Modifier = Modifier) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -21,17 +22,18 @@ fun Home() {
             painter = painterResource(id = R.drawable.background),
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
+            modifier = modifier.fillMaxSize()
         )
 
-        //Overlay
+        /*//Overlay
         Column(
             modifier = Modifier
                 .fillMaxSize()
         ) {
 
 
-        }
+
+        }*/
 
     }
 

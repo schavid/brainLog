@@ -1,8 +1,9 @@
 package com.example.brainlog.viewmodel
 
 data class Book(
+    override val id: Int,
     override val title: String,
-    override val year: Int,
+    override val year: String,
     override val description: String,
     override val genre: String,
     val pages: Int,
@@ -11,8 +12,9 @@ data class Book(
 
 
 data class Movie(
+    override val id: Int,
     override val title: String,
-    override val year: Int,
+    override val year: String,
     override val description: String,
     override val genre: String,
     val director: String,
@@ -21,8 +23,9 @@ data class Movie(
 
 
 data class Series (
+    override val id: Int,
     override val title: String,
-    override val year: Int,
+    override val year: String,
     override val description: String,
     override val genre: String,
     val director: String,

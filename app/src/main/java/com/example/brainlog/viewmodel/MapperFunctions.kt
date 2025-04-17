@@ -1,15 +1,17 @@
 package com.example.brainlog.viewmodel
 
 fun FilmDto.toDomainModel(): Movie = Movie(
+    id = id,
     title = title,
-    year = year,
+    year = release_date,
     duration = duration,
     genre = genre,
-    description = description,
+    description = overview,
     director = director,
 )
 
 fun SerieDto.toDomainModel(): Series = Series(
+    id = id,
     title = title,
     year = year,
     description = description,
@@ -21,6 +23,7 @@ fun SerieDto.toDomainModel(): Series = Series(
 )
 
 fun BuchDto.toDomainModel(): Book = Book(
+    id = id,
     title = title,
     year = year,
     description = description,

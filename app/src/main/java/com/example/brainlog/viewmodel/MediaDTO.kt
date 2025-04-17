@@ -11,12 +11,16 @@ data class FilmDto(
     val title: String,
     val video: Boolean,
     val vote_average: Double,
-    val vote_count: Int
+    val vote_count: Int,
+    val director: String, //nur das kein fehler kommt
+    val duration: Int,
+    val genre: String,
 )
 
 data class SerieDto(
+    val id: Int,
     val title: String,
-    val year: Int,
+    val year: String,
     val description: String,
     val genre: String,
     val director: String,
@@ -26,8 +30,9 @@ data class SerieDto(
 )
 
 data class BuchDto(
+    val id: Int,
     val title: String,
-    val year: Int,
+    val year: String,
     val description: String,
     val genre: String,
     val pages: Int,
