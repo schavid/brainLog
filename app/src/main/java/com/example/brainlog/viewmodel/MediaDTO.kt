@@ -3,18 +3,8 @@ package com.example.brainlog.viewmodel
 data class FilmDto(
     val id: Int,
     val original_language: String,
-    val original_title: String,
-    val overview: String,
-    val popularity: Double,
-    val poster_path: String?,
     val release_date: String,
-    val title: String,
-    val video: Boolean,
-    val vote_average: Double,
-    val vote_count: Int,
-    val director: String, //nur das kein fehler kommt
-    val duration: Int,
-    val genre: String,
+    val title: String
 )
 
 data class SerieDto(
