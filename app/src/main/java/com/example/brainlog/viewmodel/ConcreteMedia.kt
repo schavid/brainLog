@@ -33,3 +33,9 @@ data class Series (
     val seasons: Int,
     val episodes: Int
 ) : Medium
+
+data class SearchMovie (
+    override val id: Int,
+    override val original_title: String,
+    override val release_date: String
+) : SearchMedium

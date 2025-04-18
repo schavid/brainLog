@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,6 +29,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,10 +40,17 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.brainlog.R
+import com.example.brainlog.viewmodel.SearchUiState
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.brainlog.viewmodel.SearchViewModel
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Home() {
+    val viewModel: SearchViewModel = viewModel()
+    val searchState by viewModel.uiState.collectAsState()
+
     Box(modifier = Modifier.fillMaxSize()) {
         // Background Image
         Image(
@@ -51,7 +61,7 @@ fun Home() {
         )
 
 
-        SearchLogic { isSearchExpanded, searchText, onSearchExpandedChange, onSearchTextChange, searchResults ->
+        SearchLogic { isSearchExpanded, searchText, onSearchExpandedChange, onSearchTextChange ->
             Scaffold(
                 modifier = Modifier
                     .fillMaxSize()
@@ -116,11 +126,27 @@ fun Home() {
                         .padding(innerPadding)
                         .padding(16.dp)
                 ) {
-                    // Hier die Suchergebnisse anzeigen
+                    when (searchState) {
+                        is SearchUiState.Loading -> {
+                            CircularProgressIndicator()
+                        }
+
+                        is SearchUiState.Success -> {
+                            val results = (searchState as SearchUiState.Success).results
+                            SearchResultsList(results = results)
+                        }
+
+                        is SearchUiState.Error -> {
+                            Text("Fehler: ${(searchState as SearchUiState.Error).message}")
+                        }
+
+                        SearchUiState.Idle -> Unit
+                    }
+                    /*// Hier die Suchergebnisse anzeigen
                     if (searchResults.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(16.dp))
                         SearchResultsList(results = searchResults)
-                    }
+                    }*/
                 }
             }
         }

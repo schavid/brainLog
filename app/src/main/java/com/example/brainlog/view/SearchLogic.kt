@@ -10,12 +10,12 @@ import androidx.compose.runtime.setValue
 import kotlinx.coroutines.delay
 
 @Composable
-fun SearchLogic(content: @Composable (isSearchExpanded: Boolean, searchText: String, onSearchExpandedChange: (Boolean) -> Unit, onSearchTextChange: (String) -> Unit, searchResults: List<String>) -> Unit) {
+fun SearchLogic(content: @Composable (isSearchExpanded: Boolean, searchText: String, onSearchExpandedChange: (Boolean) -> Unit, onSearchTextChange: (String) -> Unit) -> Unit) {
     var isSearchExpanded by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
-    var searchResults by remember { mutableStateOf<List<String>>(emptyList()) }
+    /*var searchResults by remember { mutableStateOf<List<String>>(emptyList()) }*/
 
-    // "Fake API Call"
+    /*// "Fake API Call"
     LaunchedEffect(searchText) {
         if (searchText.isNotBlank()) {
             delay(500) // simuliere Netzwerklatenz
@@ -27,7 +27,7 @@ fun SearchLogic(content: @Composable (isSearchExpanded: Boolean, searchText: Str
         } else {
             searchResults = emptyList()
         }
-    }
+    }*/
 
     content(isSearchExpanded, searchText, { isSearchExpanded = it }, { searchText = it }, searchResults)
 }
