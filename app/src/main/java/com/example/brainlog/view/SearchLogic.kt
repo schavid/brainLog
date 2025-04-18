@@ -7,27 +7,31 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
+import androidx.compose.runtime.snapshotFlow
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.brainlog.viewmodel.SearchViewModel
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+
 
 @Composable
-fun SearchLogic(content: @Composable (isSearchExpanded: Boolean, searchText: String, onSearchExpandedChange: (Boolean) -> Unit, onSearchTextChange: (String) -> Unit) -> Unit) {
+fun SearchLogic(viewModel: SearchViewModel, content: @Composable (isSearchExpanded: Boolean, searchText: String, onSearchExpandedChange: (Boolean) -> Unit, onSearchTextChange: (String) -> Unit) -> Unit) {
     var isSearchExpanded by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
-    /*var searchResults by remember { mutableStateOf<List<String>>(emptyList()) }*/
 
-    /*// "Fake API Call"
     LaunchedEffect(searchText) {
-        if (searchText.isNotBlank()) {
-            delay(500) // simuliere Netzwerklatenz
-            searchResults = listOf(
-                "$searchText Ergebnis 1",
-                "$searchText Ergebnis 2",
-                "$searchText Ergebnis 3"
-            )
-        } else {
-            searchResults = emptyList()
-        }
-    }*/
+        snapshotFlow { searchText }
+            .debounce(500)
+            .distinctUntilChanged()
+            .collectLatest { query ->
+                if (query.length >= 2) {
+                    viewModel.search(query)
+                } else {
+                    viewModel.reset()
+                }
+            }
+    }
 
-    content(isSearchExpanded, searchText, { isSearchExpanded = it }, { searchText = it }, searchResults)
+    content(isSearchExpanded, searchText, { isSearchExpanded = it }, { searchText = it })
 }

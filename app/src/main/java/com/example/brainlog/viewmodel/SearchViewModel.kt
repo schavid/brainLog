@@ -8,7 +8,7 @@ import kotlinx.coroutines.launch
 sealed class SearchUiState {
     object Idle : SearchUiState()
     object Loading : SearchUiState()
-    data class Success(val results: List<SearchMovie>) : SearchUiState()
+    data class Success(val results: List<SearchMedium>) : SearchUiState()
     data class Error(val message: String) : SearchUiState()
 }
 
@@ -26,7 +26,7 @@ class SearchViewModel(
                 val result = repository.searchAllFilms(query)
                 _uiState.value = SearchUiState.Success(result)
             } catch (e: Exception) {
-                _uiState.value = SearchUiState.Error("Fehler: ${e.message}")
+                _uiState.value = SearchUiState.Error("${e.message}")
             }
         }
     }

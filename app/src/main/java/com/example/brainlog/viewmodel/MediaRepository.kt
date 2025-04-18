@@ -20,7 +20,7 @@ class MediaRepository(private val api: MediaAPI) {
 
     //nur mal zum testen
     suspend fun searchAllFilms(query: String): List<SearchMedium> {
-        val films = api.searchFilms(query).map { it.toSearchDomainModel() }
+        val films = api.searchFilms(query).results.map { it.toSearchDomainModel() }
         return films
     }
 

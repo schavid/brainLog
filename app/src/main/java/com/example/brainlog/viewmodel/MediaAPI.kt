@@ -7,8 +7,8 @@ import retrofit2.http.Query
 
 interface MediaAPI {
     // Suchendpunkte
-    @GET("films/search")
-    suspend fun searchFilms(@Query("query") query: String): List<SearchFilmDto>
+    @GET("search/movie")
+    suspend fun searchFilms(@Query("query") query: String): SearchResultDto
 
     @GET("series/search")
     suspend fun searchSeries(@Query("query") query: String): List<SerieDto>

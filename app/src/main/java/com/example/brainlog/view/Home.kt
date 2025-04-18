@@ -61,7 +61,7 @@ fun Home() {
         )
 
 
-        SearchLogic { isSearchExpanded, searchText, onSearchExpandedChange, onSearchTextChange ->
+        SearchLogic(viewModel = viewModel) { isSearchExpanded, searchText, onSearchExpandedChange, onSearchTextChange ->
             Scaffold(
                 modifier = Modifier
                     .fillMaxSize()

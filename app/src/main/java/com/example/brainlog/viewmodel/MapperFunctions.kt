@@ -32,7 +32,7 @@ fun BuchDto.toDomainModel(): Book = Book(
     pages = pages
 )
 
-fun SearchFilmDto.toSearchDomainModel(): SearchMovie = SearchMovie(
+fun SearchMovieDto.toSearchDomainModel(): SearchMovie = SearchMovie(
     id = id,
     original_title = original_title,
     release_date = release_date

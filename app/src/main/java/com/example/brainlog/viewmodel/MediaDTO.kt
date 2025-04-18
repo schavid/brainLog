@@ -35,8 +35,27 @@ data class BuchDto(
     val author: String
 )
 
-data class SearchFilmDto(
-    val id: Int,
-    val original_title: String,
-    val release_date: String
+data class SearchMovieDto(
+val id: Int,
+val original_title: String,
+val title: String,
+val overview: String,
+val release_date: String,
+val poster_path: String,
+val backdrop_path: String,
+val vote_average: Double,
+val vote_count: Int,
+val popularity: Double,
+val original_language: String,
+val genre_ids: List<Int>,
+val adult: Boolean,
+val video: Boolean
 )
+
+data class SearchResultDto(
+    val page: Int,
+    val results: List<SearchMovieDto>,
+    val totalPages: Int,
+    val totalResults: Int
+)
+
