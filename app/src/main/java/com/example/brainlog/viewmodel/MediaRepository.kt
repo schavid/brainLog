@@ -1,4 +1,6 @@
 package com.example.brainlog.viewmodel
+import com.example.brainlog.viewmodel.toSearchDomainModel
+
 
 class MediaRepository(private val api: MediaAPI) {
     /*// 🔍 Suche nach festgelegtem Typ (z. B. Film)
@@ -21,7 +23,8 @@ class MediaRepository(private val api: MediaAPI) {
     //nur mal zum testen
     suspend fun searchAllFilms(query: String): List<SearchMedium> {
         val films = api.searchFilms(query).results.map { it.toSearchDomainModel() }
-        return films
+        val series = api.searchSeries(query).results.map { it.toSearchDomainModel() }
+        return films + series
     }
 
 }

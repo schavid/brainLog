@@ -32,9 +32,16 @@ fun BuchDto.toDomainModel(): Book = Book(
     pages = pages
 )
 
-fun SearchMovieDto.toSearchDomainModel(): SearchMovie = SearchMovie(
+fun SearchMovieDto.toSearchDomainModel(): SearchMedium.SearchMovie = SearchMedium.SearchMovie(
     id = id,
     original_title = original_title,
     release_date = release_date,
+    poster_path = poster_path
+)
+
+fun SearchSeriesDto.toSearchDomainModel(): SearchMedium.SearchSeries = SearchMedium.SearchSeries(
+    id = id,
+    original_title = original_name,
+    release_date = first_air_date,
     poster_path = poster_path
 )
