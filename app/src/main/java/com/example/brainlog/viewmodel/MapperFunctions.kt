@@ -35,5 +35,6 @@ fun BuchDto.toDomainModel(): Book = Book(
 fun SearchMovieDto.toSearchDomainModel(): SearchMovie = SearchMovie(
     id = id,
     original_title = original_title,
-    release_date = release_date
+    release_date = release_date,
+    poster_path = poster_path
 )
