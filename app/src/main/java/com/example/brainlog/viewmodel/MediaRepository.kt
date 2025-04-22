@@ -1,5 +1,5 @@
 package com.example.brainlog.viewmodel
-import com.example.brainlog.viewmodel.toSearchDomainModel
+
 
 
 class MediaRepository(private val api: MediaAPI) {
@@ -26,5 +26,11 @@ class MediaRepository(private val api: MediaAPI) {
         val series = api.searchSeries(query).results.map { it.toSearchDomainModel() }
         return films + series
     }
+
+    suspend fun getMovieDetails(movieId: Int): Movie {
+        val movie = api.getMovieDetails(movieId).getDetailsDomainModel()
+        return movie
+    }
+
 
 }

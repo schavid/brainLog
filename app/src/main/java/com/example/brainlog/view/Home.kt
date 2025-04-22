@@ -133,7 +133,12 @@ fun Home() {
 
                         is SearchUiState.Success -> {
                             val results = (searchState as SearchUiState.Success).results
-                            SearchResultsList(results = results)
+                            SearchResultsList(
+                                results = results,
+                                onItemClick = { id ->
+                                    navController.navigate("movieDetail/$id")
+                                }
+                            )
                         }
 
                         is SearchUiState.Error -> {

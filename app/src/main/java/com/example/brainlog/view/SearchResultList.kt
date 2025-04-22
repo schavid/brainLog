@@ -1,6 +1,7 @@
 package com.example.brainlog.view
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.rememberAsyncImagePainter
@@ -20,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,9 +34,13 @@ fun SearchResultsList(results: List<SearchMedium>) {
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clickable {
+                        onItemClick(result.id)
+                    }
                     .padding(vertical = 4.dp),
                 color = Color.White,
                 shape = RoundedCornerShape(8.dp),
+
                 shadowElevation = 2.dp
             ) {
                 Row(
@@ -52,15 +58,26 @@ fun SearchResultsList(results: List<SearchMedium>) {
                                     contentDescription = result.original_title,
                                     modifier = Modifier
                                         .width(80.dp)
-                                        .height(120.dp),
+                                        .height(120.dp)
+                                        .clip(RoundedCornerShape(8.dp)),
                                     contentScale = ContentScale.Crop
                                 )
                             }
 
                         }
                         is SearchMedium.SearchSeries -> {
-                            // Falls du später z. B. nach Serien suchst:
-                            // ...
+                            result.poster_path?.let { path ->
+                                val imageUrl = "https://image.tmdb.org/t/p/w500$path"
+                                Image(
+                                    painter = rememberAsyncImagePainter(imageUrl),
+                                    contentDescription = result.original_title,
+                                    modifier = Modifier
+                                        .width(80.dp)
+                                        .height(120.dp)
+                                        .clip(RoundedCornerShape(8.dp)),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
                         }
                     }
 
