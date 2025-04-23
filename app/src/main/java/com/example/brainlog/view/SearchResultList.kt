@@ -28,14 +28,14 @@ import androidx.compose.ui.unit.dp
 import com.example.brainlog.viewmodel.SearchMedium
 
 @Composable
-fun SearchResultsList(results: List<SearchMedium>) {
+fun SearchResultsList(results: List<SearchMedium>, onClick: (Int) -> Unit) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         items(results) { result ->
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
-                        onItemClick(result.id)
+                        onClick(result.id)
                     }
                     .padding(vertical = 4.dp),
                 color = Color.White,

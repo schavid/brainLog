@@ -42,12 +42,13 @@ import androidx.compose.ui.unit.dp
 import com.example.brainlog.R
 import com.example.brainlog.viewmodel.SearchUiState
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.example.brainlog.viewmodel.SearchViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Home() {
+fun Home(navController: NavController) {
     val viewModel: SearchViewModel = viewModel()
     val searchState by viewModel.uiState.collectAsState()
 
@@ -133,12 +134,10 @@ fun Home() {
 
                         is SearchUiState.Success -> {
                             val results = (searchState as SearchUiState.Success).results
-                            SearchResultsList(
-                                results = results,
-                                onItemClick = { id ->
-                                    navController.navigate("movieDetail/$id")
-                                }
-                            )
+                            SearchResultsList(results = results) {
+                                clickedMovieId ->
+                                navController.navigate("movieDetail/$clickedMovieId")
+                            }
                         }
 
                         is SearchUiState.Error -> {
@@ -147,11 +146,6 @@ fun Home() {
 
                         SearchUiState.Idle -> Unit
                     }
-                    /*// Hier die Suchergebnisse anzeigen
-                    if (searchResults.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(16.dp))
-                        SearchResultsList(results = searchResults)
-                    }*/
                 }
             }
         }
