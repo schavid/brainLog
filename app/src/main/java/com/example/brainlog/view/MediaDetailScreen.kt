@@ -113,17 +113,19 @@ fun MediaDetailScreen(
                         .wrapContentHeight()
                         .padding(horizontal = 16.dp)
                         .verticalScroll(rememberScrollState())
-                        .background(Color(0x505B231D), RoundedCornerShape(8.dp))
-                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0x505B231D), RoundedCornerShape(20.dp))
                         .padding(16.dp)
                 ) {
+                    Spacer(modifier = Modifier.height(10.dp))
+
                     Text(
                         text = medium.title,
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold,
                         fontSize = 24.sp,
                         fontFamily = FontFamily.Serif,
-                        color = White
+                        color = White,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -142,8 +144,9 @@ fun MediaDetailScreen(
                             modifier = Modifier
                                 .width(80.dp)
                                 .height(120.dp)
-                                .clip(RoundedCornerShape(8.dp)),
-                            contentScale = ContentScale.Crop
+                                .clip(RoundedCornerShape(8.dp))
+                                .align(Alignment.CenterHorizontally),
+                            contentScale = ContentScale.Crop,
                         )
                     }
 
