@@ -37,6 +37,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.brainlog.viewmodel.MovieDetailViewModel
@@ -183,7 +184,10 @@ fun MediaDetailScreen(
                                 }
 
                                 // Genre
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.width(120.dp)
+                                ) {
                                     Text(
                                         text = "Genre",
                                         fontWeight = FontWeight.Bold,
@@ -193,7 +197,8 @@ fun MediaDetailScreen(
                                     Text(
                                         text = medium.genres.joinToString(),
                                         fontSize = 12.sp,
-                                        color = White
+                                        color = White,
+
                                     )
                                 }
 
