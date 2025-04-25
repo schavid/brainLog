@@ -131,9 +131,13 @@ fun Home(navController: NavController) {
 
                         is SearchUiState.Success -> {
                             val results = (searchState as SearchUiState.Success).results
-                            SearchResultsList(results = results) {
-                                clickedMovieId ->
-                                navController.navigate("movieDetail/$clickedMovieId")
+                            SearchResultsList(results = results) { clickedMedium ->
+
+                                val mediaType = clickedMedium.type
+                                val mediaId = clickedMedium.id
+
+
+                                navController.navigate("mediaDetail/${mediaId}/${mediaType.name}")
                             }
                         }
 

@@ -4,4 +4,5 @@ enum class MediumType {
     MOVIE,
     SERIES,
     BOOK,
+    GAME
 }

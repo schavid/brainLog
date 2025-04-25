@@ -6,11 +6,11 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 
-sealed class MovieDetailUiState {
-    object Idle : MovieDetailUiState()
-    object Loading : MovieDetailUiState()
-    data class Success(val movie: Movie) : MovieDetailUiState()
-    data class Error(val message: String) : MovieDetailUiState()
+sealed class MediaDetailUiState {
+    object Idle : MediaDetailUiState()
+    object Loading : MediaDetailUiState()
+    data class Success(val medium: Medium) : MediaDetailUiState()
+    data class Error(val message: String) : MediaDetailUiState()
 }
 
 
@@ -18,23 +18,45 @@ class MovieDetailViewModel(
     private val repository: MediaRepository = MediaRepository(ApiClient.mediaApi)
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<MovieDetailUiState>(MovieDetailUiState.Idle)
-    val uiState: StateFlow<MovieDetailUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow<MediaDetailUiState>(MediaDetailUiState.Idle)
+    val uiState: StateFlow<MediaDetailUiState> = _uiState.asStateFlow()
 
-    fun loadMovieDetail(movieId: Int) {
+    fun loadMovieDetail(mediaId: Int, type: MediumType) {
         viewModelScope.launch {
-            _uiState.value = MovieDetailUiState.Loading
+            _uiState.value = MediaDetailUiState.Loading
             try {
-                val movie = repository.getMovieDetails(movieId)
-                _uiState.value = MovieDetailUiState.Success(movie)
-            } catch (e: Exception) {
-                _uiState.value = MovieDetailUiState.Error(e.message ?: "Unknown error")
+                when (type) {
+                    MediumType.MOVIE -> {
+                        // Filme: Rufe die Details vom Film-Repository ab
+                        val movieDetails = repository.getMovieDetails(mediaId) // Aufruf für Filme
+                        _uiState.value = MediaDetailUiState.Success(movieDetails)
+                    }
+
+                    MediumType.SERIES -> {
+                        // Serien: Rufe die Details vom Serien-Repository ab
+                        val seriesDetails =
+                            repository.getSeriesDetails(mediaId) // Aufruf für Serien
+                        _uiState.value = MediaDetailUiState.Success(seriesDetails)
+                    }
+
+                    MediumType.BOOK -> {
+                        // Beispiel für zukünftige Erweiterung (Bücher, etc.)
+                        TODO("Implementiere die Logik für Bücher")
+                    }
+
+                    MediumType.GAME -> {
+                        // Beispiel für zukünftige Erweiterung (Spiele, etc.)
+                        TODO("Implementiere die Logik für Spiele")
+                    }
+                }
+            }catch (e: Exception) {
+                _uiState.value = MediaDetailUiState.Error(e.message ?: "Unknown error")
             }
         }
     }
 
     fun reset() {
-        _uiState.value = MovieDetailUiState.Idle
+        _uiState.value = MediaDetailUiState.Idle
     }
 }
 

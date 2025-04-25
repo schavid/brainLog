@@ -28,8 +28,13 @@ class MediaRepository(private val api: MediaAPI) {
     }
 
     suspend fun getMovieDetails(movieId: Int): Movie {
-        val movie = api.getMovieDetails(movieId).getDetailsDomainModel()
-        return movie
+        val movieDto = api.getMovieDetails(movieId)  // API-Call für Film
+        return movieDto.getDetailsDomainModel()  // Mapping auf das Domain-Modell
+    }
+
+    suspend fun getSeriesDetails(seriesId: Int): Series {
+        val seriesDto = api.getSeriesDetails(seriesId)  // API-Call für Serie
+        return seriesDto.getDetailsDomainModel()  // Mapping auf das Domain-Modell
     }
 
 

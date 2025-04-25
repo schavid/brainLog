@@ -1,14 +1,6 @@
 package com.example.brainlog.viewmodel
 
-/*data class Book(
-    override val id: Int,
-    override val title: String,
-    override val year: String,
-    override val description: String,
-    override val genre: String,
-    val pages: Int,
-    val author: String
-) : Medium*/
+
 
 
 data class Movie(
@@ -18,7 +10,6 @@ data class Movie(
     override val genres: List<String>,
     override val releaseDate: String,
     val runtime: Int?,
-
     val posterUrl: String?,
     val backdropUrl: String?,
     val rating: Double,
@@ -28,15 +19,21 @@ data class Movie(
 
 
 
-/*data class Series (
+data class Series(
     override val id: Int,
     override val title: String,
-    override val year: String,
+    val originalName: String,
     override val description: String,
-    override val genre: String,
-    val director: String,
-    val episode_duration: Int,
-    val seasons: Int,
-    val episodes: Int
-) : Medium*/
+    val posterUrl: String?,
+    override val releaseDate: String,
+    val lastAirDate: String?,
+    val numberOfSeasons: Int,
+    val numberOfEpisodes: Int,
+    override val genres: List<String>,
+    val country: List<String>,
+    val originalLanguage: String,
+    val popularity: Double,
+    val voteAverage: Double,
+    val voteCount: Int,
+) : Medium
 

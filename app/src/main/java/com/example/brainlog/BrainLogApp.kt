@@ -7,7 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.brainlog.view.Home
 import com.example.brainlog.view.MediaDetailScreen
-
+import com.example.brainlog.viewmodel.MediumType
 
 
 @Composable
@@ -18,10 +18,13 @@ fun BrainLogApp() {
         composable("home") {
             Home(navController)
         }
-        composable("movieDetail/{movieId}") { backStackEntry ->
-            val movieId = backStackEntry.arguments?.getString("movieId")?.toIntOrNull()
-            movieId?.let {
-                MediaDetailScreen(movieId = it)
+        composable("mediaDetail/{mediaId}/{mediaType}") { backStackEntry ->
+            val mediaID = backStackEntry.arguments?.getString("mediaId")?.toIntOrNull()
+            val mediaType = backStackEntry.arguments?.getString("mediaType")?.let { MediumType.valueOf(it) }
+
+            // Falls movieId oder mediaType null sind, handle diesen Fall
+            if (mediaID != null && mediaType != null) {
+                MediaDetailScreen(movieId = mediaID, mediaType = mediaType)
             }
         }
     }

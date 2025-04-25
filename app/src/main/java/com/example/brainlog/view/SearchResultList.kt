@@ -25,17 +25,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.brainlog.viewmodel.MediumType
 import com.example.brainlog.viewmodel.SearchMedium
 
 @Composable
-fun SearchResultsList(results: List<SearchMedium>, onClick: (Int) -> Unit) {
+fun SearchResultsList(results: List<SearchMedium>, onClick: (SearchMedium) -> Unit) {
     LazyColumn(modifier = Modifier.fillMaxSize()) {
         items(results) { result ->
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
-                        onClick(result.id)
+                        onClick(result)
                     }
                     .padding(vertical = 4.dp),
                 color = Color.White,
@@ -95,12 +96,6 @@ fun SearchResultsList(results: List<SearchMedium>, onClick: (Int) -> Unit) {
                             )
                         }
                     }
-
-
-
-
-
-
                 }
             }
         }

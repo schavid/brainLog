@@ -1,7 +1,6 @@
 package com.example.brainlog.view
 
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -36,7 +35,6 @@ import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -45,15 +43,17 @@ import com.example.brainlog.viewmodel.MovieDetailViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.brainlog.R
-import com.example.brainlog.viewmodel.MovieDetailUiState
-import com.example.brainlog.viewmodel.SearchMedium
-
+import com.example.brainlog.viewmodel.MediumType
+import com.example.brainlog.viewmodel.MediaDetailUiState
+import com.example.brainlog.viewmodel.Movie
+import com.example.brainlog.viewmodel.Series
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MediaDetailScreen(
     movieId: Int,
+    mediaType: MediumType,
     viewModel: MovieDetailViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -94,17 +94,17 @@ fun MediaDetailScreen(
         containerColor = Color.Transparent,
     ) { innerPadding ->
         LaunchedEffect(Unit) {
-            viewModel.loadMovieDetail(movieId)
+            viewModel.loadMovieDetail(movieId, mediaType)
         }
 
         when (uiState) {
-            is MovieDetailUiState.Loading,
-            is MovieDetailUiState.Idle -> {
+            is MediaDetailUiState.Loading,
+            is MediaDetailUiState.Idle -> {
                 CircularProgressIndicator()
             }
 
-            is MovieDetailUiState.Success -> {
-                val movie = (uiState as MovieDetailUiState.Success).movie
+            is MediaDetailUiState.Success -> {
+                val medium = (uiState as MediaDetailUiState.Success).medium
 
                 Column(
                     modifier = Modifier
@@ -118,13 +118,34 @@ fun MediaDetailScreen(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = movie.title,
+                        text = medium.title,
                         textAlign = TextAlign.Center,
                         fontWeight = FontWeight.Bold,
                         fontSize = 24.sp,
                         fontFamily = FontFamily.Serif,
                         color = White
                     )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    val posterUrl = when (medium) {
+                        is Movie -> medium.posterUrl
+                        is Series -> medium.posterUrl
+                        else -> null
+                    }
+
+                    posterUrl?.let { path ->
+                        val imageUrl = "https://image.tmdb.org/t/p/w500$path"
+                        Image(
+                            painter = rememberAsyncImagePainter(imageUrl),
+                            contentDescription = medium.title,
+                            modifier = Modifier
+                                .width(80.dp)
+                                .height(120.dp)
+                                .clip(RoundedCornerShape(8.dp)),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -152,7 +173,7 @@ fun MediaDetailScreen(
                                         color = White
                                     )
                                     Text(
-                                        text = movie.releaseDate,
+                                        text = medium.releaseDate,
                                         fontSize = 12.sp,
                                         color = White
                                     )
@@ -167,7 +188,7 @@ fun MediaDetailScreen(
                                         color = White
                                     )
                                     Text(
-                                        text = movie.genres.joinToString(),
+                                        text = medium.genres.joinToString(),
                                         fontSize = 12.sp,
                                         color = White
                                     )
@@ -175,33 +196,43 @@ fun MediaDetailScreen(
 
                                 // Runtime
                                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(
-                                        text = "Runtime",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp,
-                                        color = White
-                                    )
-                                    Text(
-                                        text = "${movie.runtime} min",
-                                        fontSize = 12.sp,
-                                        color = White
-                                    )
+
+                                    when (medium) {
+
+                                        is Movie -> {
+                                            Text(
+                                                text = "Runtime",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 14.sp,
+                                                color = White
+                                            )
+                                            Text(
+                                                text = "${medium.runtime} min",
+                                                fontSize = 12.sp,
+                                                color = White
+                                            )
+                                        }
+
+                                        is Series -> {
+                                            Text(
+                                                text = "Seasons",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 14.sp,
+                                                color = White
+                                            )
+                                            Text(
+                                                text = "${medium.numberOfSeasons}",
+                                                fontSize = 12.sp,
+                                                color = White
+                                            )
+                                        }
+                                    }
+
                                 }
                             }
 
                         }
-                        movie.posterUrl?.let { path ->
-                            val imageUrl = "https://image.tmdb.org/t/p/w500$path"
-                            Image(
-                                painter = rememberAsyncImagePainter(imageUrl),
-                                contentDescription = movie.title,
-                                modifier = Modifier
-                                    .width(80.dp)
-                                    .height(120.dp)
-                                    .clip(RoundedCornerShape(8.dp)),
-                                contentScale = ContentScale.Crop
-                            )
-                        }
+
                     }
                     Spacer(modifier = Modifier.height(16.dp))
 
@@ -214,7 +245,7 @@ fun MediaDetailScreen(
                     )
 
                     Text(
-                        text = movie.description,
+                        text = medium.description,
                         textAlign = TextAlign.Justify,
                         fontSize = 12.sp,
                         color = White
@@ -224,8 +255,8 @@ fun MediaDetailScreen(
 
             }
 
-            is MovieDetailUiState.Error -> {
-                val errorMsg = (uiState as MovieDetailUiState.Error).message
+            is MediaDetailUiState.Error -> {
+                val errorMsg = (uiState as MediaDetailUiState.Error).message
                 Text("Error: $errorMsg")
             }
         }
