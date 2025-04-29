@@ -4,6 +4,7 @@ package com.example.brainlog
 import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -17,22 +18,24 @@ import com.example.brainlog.view.MyBottomAppBar
 import com.example.brainlog.viewmodel.MediumType
 
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+/*@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")*/
 @Composable
 fun BrainLogApp() {
     val navController = rememberNavController()
 
     Scaffold(
         bottomBar = {
+
             MyBottomAppBar(
                 onHomeClick = { navController.navigate("home") },
                 onProfileClick = { navController.navigate("profile") },
                 navController = navController
             )
 
-        }
-    ) {
-        NavHost(navController = navController, startDestination = "home") {
+        },
+        containerColor = Color.Transparent,
+    ) { innerPadding ->
+        NavHost(navController = navController, startDestination = "home",  modifier = Modifier.padding(innerPadding)) {
             composable("home") {
                 Home(navController)
             }
