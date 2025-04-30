@@ -83,15 +83,13 @@ fun MyBottomAppBar(
             .fillMaxWidth()
             .padding(start = 50.dp, end = 50.dp, bottom = 12.dp)
     ) {
-        // Surface für das sichtbare Rechteck
+
         Surface(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(64.dp)
                 .clip(RoundedCornerShape(25.dp)),
-            color = Color(0xFF5B231D),
-            /*shadowElevation = 20.dp,*/
-            tonalElevation = 20.dp
+            color = Color(0xFF5B231D)
 
         ) {
 

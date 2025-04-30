@@ -38,9 +38,10 @@ fun SearchResultsList(results: List<SearchMedium>, onClick: (SearchMedium) -> Un
                     .clickable {
                         onClick(result)
                     }
-                    .padding(vertical = 4.dp),
+                    .padding(horizontal = 5.dp, vertical = 4.dp),
                 color = Color.White,
                 shape = RoundedCornerShape(8.dp),
+
 
                 shadowElevation = 2.dp
             ) {
