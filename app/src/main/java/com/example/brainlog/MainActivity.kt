@@ -35,14 +35,14 @@ class MainActivity : ComponentActivity() {
                 val backgroundImagePainter = painterResource(id = R.drawable.background)
 
 
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        Image(
-                            painter = backgroundImagePainter,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Image(
+                        painter = backgroundImagePainter,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
 
                 BrainLogApp()
             }
