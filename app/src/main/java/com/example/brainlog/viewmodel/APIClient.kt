@@ -10,6 +10,7 @@ object ApiClient {
     private const val BASE_URL = "https://api.themoviedb.org/3/"
     private const val TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2MzdmZTk5Njc5MjQ3OTEzMDRlOGNjODA0OGZiMmRhMiIsIm5iZiI6MTc0NDg4MDUxNC4zNjA5OTk4LCJzdWIiOiI2ODAwYzM4MmYzOWM3MzAxMjVkOTRmZWMiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.VMTfcmkceJ56C30F-k2l6hsxcmg-WVjjri8n8pKnIQo"
 
+
     private val client = OkHttpClient.Builder()
         .addInterceptor { chain ->
             val request = chain.request().newBuilder()

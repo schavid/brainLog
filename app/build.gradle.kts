@@ -64,6 +64,8 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
     implementation("io.coil-kt:coil-compose:2.4.0")
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.36.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
 
 
 }

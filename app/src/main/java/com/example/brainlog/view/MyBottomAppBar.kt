@@ -77,7 +77,7 @@ fun MyBottomAppBar(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Box für äußeres Padding
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
