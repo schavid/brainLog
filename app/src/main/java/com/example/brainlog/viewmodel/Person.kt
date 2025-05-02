@@ -1,8 +1,14 @@
 package com.example.brainlog.viewmodel
 
+import com.google.firebase.firestore.ServerTimestamp
+import java.util.Date
+
 data class Person(
-    val id: Int,
-    val username: String,
-    val email: String,
-    val library: MutableList<Medium> = mutableListOf() // Die Bibliothek des Benutzers
-)
+    val userId: String = "",
+    val email: String = "",
+    val username: String = "",
+    @ServerTimestamp
+    val createdAt: Date? = null
+) {
+
+}
