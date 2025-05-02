@@ -1,14 +1,12 @@
-package com.example.brainlog.viewmodel
+package com.example.brainlog.model
 
 import com.google.firebase.firestore.ServerTimestamp
 import java.util.Date
 
-data class Person(
+data class UserDocument(
     val userId: String = "",
     val email: String = "",
     val username: String = "",
     @ServerTimestamp
     val createdAt: Date? = null
-) {
-
-}
+)

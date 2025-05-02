@@ -1,4 +1,4 @@
-package com.example.brainlog.viewmodel
+package com.example.brainlog.model
 
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit

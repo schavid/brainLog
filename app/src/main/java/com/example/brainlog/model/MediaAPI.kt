@@ -1,4 +1,4 @@
-package com.example.brainlog.viewmodel
+package com.example.brainlog.model
 
 import retrofit2.http.GET
 import retrofit2.http.Path

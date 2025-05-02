@@ -1,4 +1,4 @@
-package com.example.brainlog.viewmodel
+package com.example.brainlog.model
 
 interface Medium {
     val id: Int

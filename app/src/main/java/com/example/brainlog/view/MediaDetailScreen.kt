@@ -33,21 +33,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.brainlog.viewmodel.MovieDetailViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
-import com.example.brainlog.R
-import com.example.brainlog.viewmodel.MediumType
+import com.example.brainlog.model.MediumType
 import com.example.brainlog.viewmodel.MediaDetailUiState
-import com.example.brainlog.viewmodel.Movie
-import com.example.brainlog.viewmodel.Series
+import com.example.brainlog.model.Movie
+import com.example.brainlog.model.Series
 
 
 @OptIn(ExperimentalMaterial3Api::class)

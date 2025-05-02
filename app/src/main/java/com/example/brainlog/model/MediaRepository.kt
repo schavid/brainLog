@@ -1,4 +1,4 @@
-package com.example.brainlog.viewmodel
+package com.example.brainlog.model
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope

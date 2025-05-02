@@ -1,4 +1,4 @@
-package com.example.brainlog.viewmodel
+package com.example.brainlog.model
 import com.example.brainlog.viewmodel.dto.MovieDetailDto
 import com.example.brainlog.viewmodel.dto.SearchMovieDto
 import com.example.brainlog.viewmodel.dto.SearchSeriesDto

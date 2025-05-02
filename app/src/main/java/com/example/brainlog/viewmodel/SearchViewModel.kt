@@ -2,6 +2,9 @@ package com.example.brainlog.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.brainlog.model.ApiClient
+import com.example.brainlog.model.MediaRepository
+import com.example.brainlog.model.SearchMedium
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 

@@ -12,7 +12,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.brainlog.view.Home
 import com.example.brainlog.view.MediaDetailScreen
 import com.example.brainlog.view.MyBottomAppBar
-import com.example.brainlog.viewmodel.MediumType
+import com.example.brainlog.model.MediumType
 
 
 

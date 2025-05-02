@@ -8,10 +8,13 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import com.example.brainlog.model.UserDocument
 
 class AuthViewModel:  ViewModel(){
 
@@ -70,20 +73,82 @@ class AuthViewModel:  ViewModel(){
         }
     }
 
-    fun register(email: String, password: String) {
+
+
+    fun register(email: String, password: String, username: String) {
+
+        if (email.isBlank() || password.isBlank() || username.isBlank()) {
+            _errorMessage.value = "Email, password, and username cannot be empty."
+            return
+        }
+
+        if (password.length < 6) {
+            _errorMessage.value = "Password must be at least 6 characters long."
+            return
+        }
+
+
         _isLoading.value = true
         _errorMessage.value = null
         viewModelScope.launch {
             try {
-                auth.createUserWithEmailAndPassword(email, password).await()
-                _isLoading.value = false
+
+                val authResult = auth.createUserWithEmailAndPassword(email, password).await()
+                val firebaseUser = authResult.user
+
+                if (firebaseUser != null) {
+                    // 3. Wenn Auth User erfolgreich erstellt wurde, speichere die Benutzerdaten in Firestore
+                    val userDoc = UserDocument(
+                        userId = firebaseUser.uid,
+                        email = email,
+                        username = username // Speichere den Benutzernamen wie eingegeben
+                    )
+                    saveUserData(firebaseUser.uid, userDoc)
+                    _registrationResult.postValue(Result.success(firebaseUser))
+                } else {
+                    throw Exception("Failed to create user account.")
+                }
+
+            } catch (e: FirebaseAuthUserCollisionException) {
+                _errorMessage.postValue("This email address is already in use.")
+                _registrationResult.postValue(Result.failure(e))
+            }  catch (e: FirebaseAuthWeakPasswordException) {
+                _errorMessage.postValue("Password is too weak.")
+                _registrationResult.postValue(Result.failure(e))
             } catch (e: Exception) {
-                _isLoading.value = false
-                _errorMessage.value = e.message
-            } finally {
+                _errorMessage.postValue(e.localizedMessage ?: "Registration failed")
+                _registrationResult.postValue(Result.failure(e))
+                // HINWEIS: Wenn hier ein Fehler auftritt, NACHDEM der Auth User erstellt wurde,
+                // haben wir einen Auth User ohne Firestore-Dokument. Das muss man ggf. behandeln.
+            }
+
+            finally {
                 _isLoading.value = false
             }
             }
+    }
+
+    private suspend fun saveUserData(userId: String, userDoc: UserDocument) {
+        try {
+            db.collection("users").document(userId).set(userDoc).await()
+        } catch (e: Exception) {
+            _errorMessage.postValue(e.localizedMessage ?: "Error saving user data")
+            _registrationResult.postValue(Result.failure(e))
+        }
+    }
+
+    fun logout() {
+        auth.signOut()
+    }
+
+    // --- Hilfsfunktion zum Zurücksetzen der Fehlermeldung ---
+    fun clearErrorMessage() {
+        _errorMessage.value = null
+    }
+
+    // --- Hilfsfunktion für User ID ---
+    fun getCurrentUserId(): String? {
+        return auth.currentUser?.uid
     }
 
 

@@ -1,6 +1,6 @@
 package com.example.brainlog.viewmodel.dto
 
-import com.example.brainlog.viewmodel.MediumType
+import com.example.brainlog.model.MediumType
 
 data class SearchMovieDto(
     val id: Int,
