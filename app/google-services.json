@@ -7,17 +7,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1034289530728:android:92a79c16d21ae7718438dd",
+        "mobilesdk_app_id": "1:1034289530728:android:1907394b438434b28438dd",
         "android_client_info": {
-          "package_name": "BrainLog.app"
+          "package_name": "com.example.brainlog"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1034289530728-d094micir27r4ef7r3441qkd153rg3ao.apps.googleusercontent.com",
+          "client_id": "1034289530728-msk6isvhtu22nfhq6qjfjoc05l1qf9o5.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "BrainLog.app",
+            "package_name": "com.example.brainlog",
             "certificate_hash": "c4040879a82ea3d0358f9c675335a3e5ad6721b5"
           }
         },
