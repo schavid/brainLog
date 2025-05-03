@@ -23,11 +23,11 @@ class MainActivity : ComponentActivity() {
             statusBarStyle = SystemBarStyle.auto(
                 Color.TRANSPARENT,
                 Color.TRANSPARENT
-            ) { false }, // Annahme: Dunkler Hintergrund -> Helle Icons
+            ) { false },
             navigationBarStyle = SystemBarStyle.auto(
                 Color.TRANSPARENT,
                 Color.TRANSPARENT
-            ) { false }  // Annahme: Dunkler Hintergrund -> Helle Icons
+            ) { false }
         )
 
         setContent {

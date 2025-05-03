@@ -1,52 +1,68 @@
 package com.example.brainlog
 
 
-
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.brainlog.view.Home
-import com.example.brainlog.view.MediaDetailScreen
-import com.example.brainlog.view.MyBottomAppBar
-import com.example.brainlog.model.MediumType
+import com.example.brainlog.view.AuthScreen
+import com.example.brainlog.viewmodel.AuthViewModel
 
 
+// Definiere die Namen für die Top-Level-Routen
+object MainDestinations {
+    const val AUTH_ROUTE = "auth"
+    const val MAIN_APP_ROUTE = "main_app"
+}
 
 @Composable
-fun BrainLogApp() {
-    val navController = rememberNavController()
+fun BrainLogApp(
+    authViewModel: AuthViewModel = viewModel()
+) {
+    val topLevelNavController = rememberNavController()
 
-    Scaffold(
-        bottomBar = {
+    val currentUser by authViewModel.currentUser.collectAsState()
 
-            MyBottomAppBar(
-                onHomeClick = { navController.navigate("home") },
-                onProfileClick = { navController.navigate("profile") },
-                navController = navController
-            )
-
-        },
-        containerColor = androidx.compose.ui.graphics.Color.Transparent,
-    ) { innerPadding ->
-        NavHost(navController = navController, startDestination = "home",  modifier = Modifier.padding(innerPadding)) {
-            composable("home") {
-                Home(navController)
-            }
-            composable("mediaDetail/{mediaId}/{mediaType}") { backStackEntry ->
-                val mediaID = backStackEntry.arguments?.getString("mediaId")?.toIntOrNull()
-                val mediaType = backStackEntry.arguments?.getString("mediaType")?.let { MediumType.valueOf(it) }
-
-                // Falls movieId oder mediaType null sind, handle diesen Fall
-                if (mediaID != null && mediaType != null) {
-                    MediaDetailScreen(movieId = mediaID, mediaType = mediaType)
-                }
-            }
-        }
+    val startDestination = if (currentUser == null) {
+        MainDestinations.AUTH_ROUTE
+    } else {
+        MainDestinations.MAIN_APP_ROUTE
     }
 
+    NavHost(
+        navController = topLevelNavController,
+        startDestination = startDestination // Dynamisches Startziel
+    ) {
+        // 5. Ziel für den Authentifizierungs-Bildschirm definieren
+        composable(MainDestinations.AUTH_ROUTE) {
+            AuthScreen(
+                authViewModel = authViewModel, // AuthViewModel übergeben
+                onAuthSuccess = {
+                    // Wenn Login/Register erfolgreich war:
+                    // Navigiere zur Haupt-App und entferne den Auth-Screen aus dem Backstack,
+                    // damit der Benutzer nicht per "Zurück"-Taste zum Login kommt.
+                    topLevelNavController.navigate(MainDestinations.MAIN_APP_ROUTE) {
+                        popUpTo(MainDestinations.AUTH_ROUTE) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+
+        composable(MainDestinations.MAIN_APP_ROUTE) {
+            MainAppContent(
+                authViewModel = authViewModel,
+                onLogout = {
+                    topLevelNavController.navigate(MainDestinations.AUTH_ROUTE) {
+                        popUpTo(MainDestinations.MAIN_APP_ROUTE) { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
+            )
+        }
+    }
 
 }
