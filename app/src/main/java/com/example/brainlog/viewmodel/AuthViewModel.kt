@@ -14,6 +14,8 @@ import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import com.example.brainlog.model.UserDocument
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,9 +57,13 @@ class AuthViewModel:  ViewModel(){
         viewModelScope.launch {
             try {
                 auth.signInWithEmailAndPassword(email, pass).await()
-                // Erfolg wird durch authStateListener behandelt
+            } catch (e: FirebaseAuthInvalidUserException) {
+                _errorMessage.value = "No account found with this email address."
+            } catch (e: FirebaseAuthInvalidCredentialsException) {
+                // --- HIER: Falsches Passwort (oder manchmal auch User nicht gefunden, Firebase ist da nicht 100% konsistent) ---
+                _errorMessage.value = "Incorrect password. Please try again."
             } catch (e: Exception) {
-                _errorMessage.value = e.localizedMessage ?: "Login failed"
+                _errorMessage.value = e.localizedMessage ?: "Login failed. Please try again."
             } finally {
                 _isLoading.value = false
             }

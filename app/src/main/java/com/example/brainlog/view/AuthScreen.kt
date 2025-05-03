@@ -54,7 +54,7 @@ fun AuthScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // Fehlermeldung anzeigen
+    // Fehlermeldung anzeigen (unverändert)
     LaunchedEffect(errorMessage) {
         errorMessage?.let { msg ->
             scope.launch {
@@ -64,8 +64,7 @@ fun AuthScreen(
         }
     }
 
-    // nach erfolgreichem login wegnavigieren
-    // beobachtet Änderungen im currentUser StateFlow
+    // nach erfolgreichem login wegnavigieren (unverändert)
     LaunchedEffect(currentUser) {
         if (currentUser != null) {
             onAuthSuccess()
@@ -76,18 +75,19 @@ fun AuthScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
 
+        // Haupt-Column für das Layout
         Column(
-          modifier = Modifier
-              .fillMaxSize()
-              .padding(paddingValues)
-              .padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Login or Register", fontSize = 23.sp)
             Spacer(modifier = Modifier.height(24.dp))
 
-            OutlinedTextField( // Oder TextField in M3
+            OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
                 label = { Text("Email") },
@@ -97,7 +97,7 @@ fun AuthScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            OutlinedTextField( // Oder TextField in M3
+            OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
                 label = { Text("Password") },
@@ -107,11 +107,11 @@ fun AuthScreen(
                 isError = errorMessage?.contains("password", ignoreCase = true) == true
             )
             Spacer(modifier = Modifier.height(8.dp))
-        }
 
-        AnimatedVisibility(visible = showUsernameField) {
-            Column {
-                OutlinedTextField( // Oder TextField in M3
+
+            AnimatedVisibility(visible = showUsernameField) {
+                // Nur das Textfeld hier rein!
+                OutlinedTextField(
                     value = username,
                     onValueChange = { username = it },
                     label = { Text("Username") },
@@ -119,45 +119,46 @@ fun AuthScreen(
                     singleLine = true,
                     isError = errorMessage?.contains("username", ignoreCase = true) == true
                 )
-                Spacer(modifier = Modifier.height(16.dp))
             }
-        }
+            // --- Ende Benutzername-Feld ---
 
-        if (isLoading) {
-            CircularProgressIndicator()
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                // Login Button
-                Button(
-                    onClick = {
-                        // Wichtig: Verstecke das Username-Feld, falls es sichtbar war
-                        showUsernameField = false
-                        authViewModel.login(email.trim(), password)
-                    },
-                    enabled = email.isNotBlank() && password.isNotBlank()
-                ) {
-                    Text("Login")
-                }
+            // Spacer vor den Buttons/Indicator
+            Spacer(modifier = Modifier.height(16.dp))
 
-                // Register Button
-                Button(
-                    onClick = {
-                        if (showUsernameField) {
-                            // Wenn das Feld schon sichtbar ist -> Registrierung versuchen
-                            authViewModel.register(email.trim(), password, username.trim())
-                        } else {
-                            // Wenn das Feld noch nicht sichtbar ist -> Nur anzeigen
-                            showUsernameField = true
-                            // Optional: Fehlermeldung zurücksetzen, falls eine vom Login übrig ist
-                            authViewModel.clearErrorMessage()
-                        }
-                    },
-                    enabled = email.isNotBlank() && password.isNotBlank()
+            // --- Ladeanzeige ODER Buttons ---
+            // Dieser Block ist jetzt Teil der Haupt-Column
+            if (isLoading) {
+                CircularProgressIndicator()
+            } else {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Text(if (showUsernameField) "Register Now" else "Register")
+                    // Login Button
+                    Button(
+                        onClick = {
+                            showUsernameField = false // Verstecke Username-Feld beim Login-Versuch
+                            authViewModel.login(email.trim(), password)
+                        },
+                        enabled = email.isNotBlank() && password.isNotBlank()
+                    ) {
+                        Text("Login")
+                    }
+
+                    // Register Button
+                    Button(
+                        onClick = {
+                            if (showUsernameField) {
+                                authViewModel.register(email.trim(), password, username.trim())
+                            } else {
+                                showUsernameField = true
+                                authViewModel.clearErrorMessage()
+                            }
+                        },
+                        enabled = true
+                    ) {
+                        Text(if (showUsernameField) "Register Now" else "Register")
+                    }
                 }
             }
         }

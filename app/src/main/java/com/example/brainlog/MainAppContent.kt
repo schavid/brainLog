@@ -36,13 +36,13 @@ fun MainAppContent(
             composable("home") {
                 Home(navController)
             }
-            composable("profile") {
+            /*composable("profile") {
                 ProfileScreen(
                     navController = navController,
                     authViewModel = authViewModel,
                     onLoggedOut = onLogout
                 )
-            }
+            }*/
             composable("mediaDetail/{mediaId}/{mediaType}") { backStackEntry ->
                 val mediaID = backStackEntry.arguments?.getString("mediaId")?.toIntOrNull()
                 val mediaType = backStackEntry.arguments?.getString("mediaType")?.let { MediumType.valueOf(it) }
