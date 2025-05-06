@@ -63,8 +63,8 @@ fun SearchResultsList(results: List<SearchMedium>, onClick: (SearchMedium) -> Un
                                     contentScale = ContentScale.Crop
                                 )
                             }
-
                         }
+
                         is SearchMedium.SearchSeries -> {
                             result.poster_path?.let { path ->
                                 val imageUrl = "https://image.tmdb.org/t/p/w500$path"

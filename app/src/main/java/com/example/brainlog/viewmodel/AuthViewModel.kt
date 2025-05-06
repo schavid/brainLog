@@ -1,6 +1,7 @@
 package com.example.brainlog.viewmodel
 
 
+import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -40,6 +41,7 @@ class AuthViewModel:  ViewModel(){
 
     init {
         auth.addAuthStateListener(authStateListener)
+        Log.d("AuthViewModel", "Current User: ${auth.currentUser?.email}")
     }
 
     override fun onCleared() {
@@ -55,7 +57,7 @@ class AuthViewModel:  ViewModel(){
         _isLoading.value = true
         _errorMessage.value = null
         viewModelScope.launch {
-            try {
+            try { 
                 auth.signInWithEmailAndPassword(email, pass).await()
             } catch (e: FirebaseAuthInvalidUserException) {
                 _errorMessage.value = "No account found with this email address."
@@ -119,6 +121,7 @@ class AuthViewModel:  ViewModel(){
             }
     }
 
+
     private suspend fun saveUserData(userId: String, userDoc: UserDocument) {
         try {
             db.collection("users").document(userId).set(userDoc).await()
@@ -141,7 +144,6 @@ class AuthViewModel:  ViewModel(){
     fun getCurrentUserId(): String? {
         return auth.currentUser?.uid
     }
-
 
 
 
