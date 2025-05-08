@@ -11,8 +11,12 @@ import kotlinx.coroutines.launch
 sealed class SearchUiState {
     object Idle : SearchUiState()
     object Loading : SearchUiState()
-    data class Success(val results: List<SearchMedium>) : SearchUiState()
-    data class Error(val message: String) : SearchUiState()
+    data class Success(
+        val results: List<SearchMedium>
+    ) : SearchUiState()
+    data class Error(
+        val message: String
+    ) : SearchUiState()
 }
 
 class SearchViewModel(

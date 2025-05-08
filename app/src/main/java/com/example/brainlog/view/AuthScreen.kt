@@ -125,8 +125,8 @@ fun AuthScreen(
             // Spacer vor den Buttons/Indicator
             Spacer(modifier = Modifier.height(16.dp))
 
-            // --- Ladeanzeige ODER Buttons ---
-            // Dieser Block ist jetzt Teil der Haupt-Column
+
+
             if (isLoading) {
                 CircularProgressIndicator()
             } else {
@@ -149,7 +149,9 @@ fun AuthScreen(
                     Button(
                         onClick = {
                             if (showUsernameField) {
-                                authViewModel.register(email.trim(), password, username.trim())
+                                authViewModel.register(
+                                    email.trim(), password, username.trim()
+                                )
                             } else {
                                 showUsernameField = true
                                 authViewModel.clearErrorMessage()

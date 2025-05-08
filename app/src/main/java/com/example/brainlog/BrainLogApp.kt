@@ -54,8 +54,8 @@ fun BrainLogApp(
 
         composable(MainDestinations.MAIN_APP_ROUTE) {
             MainAppContent(
-                authViewModel = authViewModel,
                 onLogout = {
+                    authViewModel.logout()
                     topLevelNavController.navigate(MainDestinations.AUTH_ROUTE) {
                         popUpTo(MainDestinations.MAIN_APP_ROUTE) { inclusive = true }
                         launchSingleTop = true

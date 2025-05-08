@@ -11,11 +11,11 @@ import com.example.brainlog.model.MediumType
 import com.example.brainlog.view.Home
 import com.example.brainlog.view.MediaDetailScreen
 import com.example.brainlog.view.MyBottomAppBar
+import com.example.brainlog.view.ProfileScreen
 import com.example.brainlog.viewmodel.AuthViewModel
 
 @Composable
 fun MainAppContent(
-    authViewModel: AuthViewModel,
     onLogout: () -> Unit
 ) {
     val navController = rememberNavController()
@@ -36,13 +36,11 @@ fun MainAppContent(
             composable("home") {
                 Home(navController)
             }
-            /*composable("profile") {
+            composable("profile") {
                 ProfileScreen(
-                    navController = navController,
-                    authViewModel = authViewModel,
-                    onLoggedOut = onLogout
+                    onNavigateToLogin = onLogout
                 )
-            }*/
+            }
             composable("mediaDetail/{mediaId}/{mediaType}") { backStackEntry ->
                 val mediaID = backStackEntry.arguments?.getString("mediaId")?.toIntOrNull()
                 val mediaType = backStackEntry.arguments?.getString("mediaType")?.let { MediumType.valueOf(it) }
