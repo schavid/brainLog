@@ -7,6 +7,7 @@ data class UserDocument(
     val userId: String = "",
     val email: String = "",
     val username: String = "",
+    val addedMovies: List<String> = emptyList(),
     @ServerTimestamp
     val createdAt: Date? = null
 )

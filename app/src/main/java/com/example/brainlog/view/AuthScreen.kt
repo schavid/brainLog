@@ -32,6 +32,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.brainlog.viewmodel.AuthUiState
 import com.example.brainlog.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
 
@@ -40,9 +41,7 @@ fun AuthScreen(
     authViewModel: AuthViewModel = viewModel(),
     onAuthSuccess: () -> Unit
 ) {
-    val isLoading by authViewModel.isLoading.collectAsState()
-    val currentUser by authViewModel.currentUser.collectAsState()
-    val errorMessage by authViewModel.errorMessage.collectAsState()
+    val uiState by authViewModel.uiState.collectAsState()
 
 
     var email by remember { mutableStateOf("") }
@@ -54,22 +53,44 @@ fun AuthScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    // Fehlermeldung anzeigen (unverändert)
-    LaunchedEffect(errorMessage) {
-        errorMessage?.let { msg ->
-            scope.launch {
-                snackbarHostState.showSnackbar(message = msg, duration = SnackbarDuration.Short)
-                authViewModel.clearErrorMessage()
+    val currentErrorMessage = when (uiState) {
+        is AuthUiState.Error -> (uiState as AuthUiState.Error).message
+        else -> null
+    }
+    val isLoading = uiState is AuthUiState.Loading
+
+    // Seiteneffekte basierend auf Änderungen des uiState vom ViewModel behandeln
+
+
+    LaunchedEffect(uiState) {
+        when (uiState) {
+            is AuthUiState.Success -> {
+                onAuthSuccess()
+                authViewModel.resetStateToIdle()
             }
+
+            is AuthUiState.Error -> { // Reaktion auf AuthUiState.Error vom ViewModel
+                // Die Nachricht von AuthUiState.Error verwenden
+                (uiState as AuthUiState.Error).message?.let { msg ->
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            message = msg,
+                            duration = SnackbarDuration.Short
+                        )
+                        // ViewModel-Methode aufrufen, um den Zustand zurückzusetzen
+                        authViewModel.resetStateToIdle()
+                    }
+                }
+            }
+
+            AuthUiState.Idle -> {}
+            AuthUiState.Loading -> {}
+            AuthUiState.LoggedOut -> {}
         }
     }
 
-    // nach erfolgreichem login wegnavigieren (unverändert)
-    LaunchedEffect(currentUser) {
-        if (currentUser != null) {
-            onAuthSuccess()
-        }
-    }
+
+
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -93,7 +114,7 @@ fun AuthScreen(
                 label = { Text("Email") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                isError = errorMessage?.contains("email", ignoreCase = true) == true
+                isError = currentErrorMessage?.contains("email", ignoreCase = true) == true
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -104,7 +125,7 @@ fun AuthScreen(
                 modifier = Modifier.fillMaxWidth(),
                 visualTransformation = PasswordVisualTransformation(),
                 singleLine = true,
-                isError = errorMessage?.contains("password", ignoreCase = true) == true
+                isError = currentErrorMessage?.contains("password", ignoreCase = true) == true
             )
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -117,7 +138,7 @@ fun AuthScreen(
                     label = { Text("Username") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    isError = errorMessage?.contains("username", ignoreCase = true) == true
+                    isError = currentErrorMessage?.contains("username", ignoreCase = true) == true
                 )
             }
             // --- Ende Benutzername-Feld ---
@@ -154,7 +175,9 @@ fun AuthScreen(
                                 )
                             } else {
                                 showUsernameField = true
-                                authViewModel.clearErrorMessage()
+                                if (uiState is AuthUiState.Error) {
+                                    authViewModel.resetStateToIdle()
+                                }
                             }
                         },
                         enabled = true

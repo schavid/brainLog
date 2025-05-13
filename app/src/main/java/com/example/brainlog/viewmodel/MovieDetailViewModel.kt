@@ -6,6 +6,9 @@ import com.example.brainlog.model.ApiClient
 import com.example.brainlog.model.MediaRepository
 import com.example.brainlog.model.Medium
 import com.example.brainlog.model.MediumType
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -17,13 +20,26 @@ sealed class MediaDetailUiState {
     data class Error(val message: String) : MediaDetailUiState()
 }
 
+sealed class AddMediumToUserUiState {
+    object Idle : AddMediumToUserUiState()
+    object Loading : AddMediumToUserUiState()
+    object Success : AddMediumToUserUiState()
+    data class Error(val message: String) : AddMediumToUserUiState()
+    object UserNotLoggedIn : AddMediumToUserUiState() // Spezifischer Fall
+}
+
 
 class MovieDetailViewModel(
-    private val repository: MediaRepository = MediaRepository(ApiClient.mediaApi)
+    private val repository: MediaRepository = MediaRepository(ApiClient.mediaApi),
+    private val auth: FirebaseAuth,
+    private val db: FirebaseFirestore
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<MediaDetailUiState>(MediaDetailUiState.Idle)
     val uiState: StateFlow<MediaDetailUiState> = _uiState.asStateFlow()
+
+    private val _addMediumToUserUiState = MutableStateFlow<AddMediumToUserUiState>(AddMediumToUserUiState.Idle)
+    val addMediumToUserUiState: StateFlow<AddMediumToUserUiState> = _addMediumToUserUiState.asStateFlow()
 
     fun loadMovieDetail(mediaId: Int, type: MediumType) {
         viewModelScope.launch {
@@ -57,6 +73,24 @@ class MovieDetailViewModel(
                 _uiState.value = MediaDetailUiState.Error(e.message ?: "Unknown error")
             }
         }
+    }
+
+    fun addMediumToUser(medium: Medium) {
+        val currentUser: FirebaseUser? = auth.currentUser
+
+        if (currentUser == null) {
+            _addMediumToUserUiState.value = AddMediumToUserUiState.UserNotLoggedIn
+            return
+        }
+
+        _addMediumToUserUiState.value = AddMediumToUserUiState.Loading
+
+        viewModelScope.launch {
+            try {
+                val documentSnap = db.collection("users").document(currentUser.uid).get().await()
+            }
+        }
+
     }
 
     fun reset() {

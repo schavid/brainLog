@@ -36,7 +36,6 @@ fun BrainLogApp(
         navController = topLevelNavController,
         startDestination = startDestination // Dynamisches Startziel
     ) {
-        // 5. Ziel für den Authentifizierungs-Bildschirm definieren
         composable(MainDestinations.AUTH_ROUTE) {
             AuthScreen(
                 authViewModel = authViewModel, // AuthViewModel übergeben
