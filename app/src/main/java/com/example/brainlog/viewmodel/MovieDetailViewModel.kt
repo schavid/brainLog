@@ -8,9 +8,11 @@ import com.example.brainlog.model.Medium
 import com.example.brainlog.model.MediumType
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 
 sealed class MediaDetailUiState {
@@ -83,14 +85,27 @@ class MovieDetailViewModel(
             return
         }
 
+        if (medium.globalID.isBlank()) {
+            _addMediumToUserUiState.value = AddMediumToUserUiState.Error("Medium hat eine ungültige ID.")
+            return
+        }
+
         _addMediumToUserUiState.value = AddMediumToUserUiState.Loading
 
         viewModelScope.launch {
             try {
-                val documentSnap = db.collection("users").document(currentUser.uid).get().await()
+                val userDocRef = db.collection("users").document(currentUser.uid)
+                userDocRef.update("addedMedias", FieldValue.arrayUnion(medium.globalID))
+                    .await()
+            } catch (e: Exception) {
+                _addMediumToUserUiState.value = AddMediumToUserUiState.Error(e.message ?: "Fehler beim Hinzufügen des Mediums")
             }
         }
 
+    }
+
+    fun resetAddMediumState() {
+        _addMediumToUserUiState.value = AddMediumToUserUiState.Idle
     }
 
     fun reset() {

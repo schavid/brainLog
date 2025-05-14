@@ -10,8 +10,8 @@ data class Movie(
     @DocumentId
     var firestoreId: String? = null,
 
-    override val globalID: String = "",
-    override val apiProvider: String = "",
+
+    override val apiProvider: String = "TMDB",
     override val id: Int = 0,
     override val title: String = "",
     override val description: String = "",
@@ -24,7 +24,8 @@ data class Movie(
     val rating: Double = 0.0,
     val votes: Int = 0,
     val tagline: String? = null,
-    val type: String = ""
+    val type: String = "Movie",
+    override val globalID: String = "${apiProvider}_${type}_${id}",
 ) : Medium
 
 
@@ -33,8 +34,7 @@ data class Series(
     @DocumentId
     var firestoreId: String? = null,
 
-    override val globalID: String = "",
-    override val apiProvider: String = "",
+    override val apiProvider: String = "TMDB",
     override val id: Int = 0,
     override val title: String = "",
     override val description: String = "",
@@ -51,6 +51,7 @@ data class Series(
     val popularity: Double = 0.0,
     val voteAverage: Double = 0.0,
     val voteCount: Int = 0,
-    val type: String = ""
+    val type: String = "Series",
+    override val globalID: String = "$apiProvider/_$type/_$id",
 ) : Medium
 

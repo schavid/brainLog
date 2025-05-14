@@ -5,8 +5,7 @@ import com.example.brainlog.viewmodel.dto.SearchSeriesDto
 import com.example.brainlog.viewmodel.dto.TvShowDto
 
 fun MovieDetailDto.getDetailsDomainModel(): Movie = Movie(
-        globalID = "$apiProvider/_$type/_$id",
-        apiProvider = "TMDB",
+
         id = id,
         title = title,
         description = overview ?: "",
@@ -18,7 +17,6 @@ fun MovieDetailDto.getDetailsDomainModel(): Movie = Movie(
         rating = vote_average,
         votes = vote_count,
         tagline = tagline,
-        type = "Movie"
     )
 
 
