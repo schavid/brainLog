@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.Button
@@ -133,7 +134,7 @@ fun ProfileScreen(
                     color = MaterialTheme.colorScheme.error
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = { userProfileViewModel.fetchUserProfile() }) { // ViewModel-Funktion umbenannt
+                Button(onClick = { userProfileViewModel.fetchUserProfileThenMedia() }) { // ViewModel-Funktion umbenannt
                     Text("Erneut versuchen")
                 }
             }
@@ -149,7 +150,7 @@ fun ProfileScreen(
                 Text("Profil nicht gefunden.", style = MaterialTheme.typography.titleMedium)
                 Text("Es scheint, als ob dein Profil noch nicht vollständig eingerichtet wurde.")
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = { userProfileViewModel.fetchUserProfile() }) { // ViewModel-Funktion umbenannt
+                Button(onClick = { userProfileViewModel.fetchUserProfileThenMedia() }) { // ViewModel-Funktion umbenannt
                     Text("Erneut versuchen")
                 }
             }
@@ -159,5 +160,5 @@ fun ProfileScreen(
     }
 }
 
-@Composable
-fun MediaListItem(medium: Medium, onClick: () -> Unit)
+/*@Composable
+fun MediaListItem(medium: Medium, onClick: () -> Unit)*/
