@@ -36,7 +36,7 @@ data class ParsedGlobalId(
 sealed interface UserMediaListUiState {
     data object Idle : UserMediaListUiState
     data object Loading : UserMediaListUiState
-    data class Success(val mediaItems: List<Medium>) : UserMediaListUiState
+    data class Success(val mediaItems: List<Medium>, val parsedIds: List<ParsedGlobalId> = emptyList()) : UserMediaListUiState
     data class Error(val message: String) : UserMediaListUiState
     data object NoMediaFound : UserMediaListUiState
 }
@@ -130,8 +130,10 @@ class ProfileScreenViewModel(
             try {
                 val deferredMediaItems = globalIds.mapNotNull { globalIdString ->
                     parseGlobalIdToComponents(globalIdString)?.let { parsedId ->
-                        async {
+                       async {
                             try {
+
+
                                 when (parsedId.mediaType) {
                                     MediumType.MOVIE -> mediaRepository.getMovieDetails(parsedId.originalId)
                                     MediumType.SERIES -> mediaRepository.getSeriesDetails(parsedId.originalId)

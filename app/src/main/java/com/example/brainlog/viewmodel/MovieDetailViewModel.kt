@@ -97,11 +97,11 @@ class MovieDetailViewModel(
                 val userDocRef = db.collection("users").document(currentUser.uid)
                 userDocRef.update("addedMedias", FieldValue.arrayUnion(medium.globalID))
                     .await()
+                _addMediumToUserUiState.value = AddMediumToUserUiState.Success
             } catch (e: Exception) {
                 _addMediumToUserUiState.value = AddMediumToUserUiState.Error(e.message ?: "Fehler beim Hinzufügen des Mediums")
             }
         }
-
     }
 
     fun resetAddMediumState() {

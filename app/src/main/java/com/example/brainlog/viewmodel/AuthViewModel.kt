@@ -94,7 +94,7 @@ class AuthViewModel:  ViewModel(){
                         userId = firebaseUser.uid,
                         email = email,
                         username = username,
-                        addedMovies = emptyList()
+                        addedMedias = emptyList()
                     )
                     saveUserData(firebaseUser.uid, userDoc)
                     _uiState.value = AuthUiState.Success(firebaseUser)

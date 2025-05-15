@@ -38,7 +38,10 @@ fun MainAppContent(
             }
             composable("profile") {
                 ProfileScreen(
-                    onNavigateToLogin = onLogout
+                    onNavigateToLogin = onLogout,
+                    onNavigateToMediaDetail = { mediaId, mediaType ->
+                        navController.navigate("mediaDetail/$mediaId/$mediaType")
+                    }
                 )
             }
             composable("mediaDetail/{mediaId}/{mediaType}") { backStackEntry ->

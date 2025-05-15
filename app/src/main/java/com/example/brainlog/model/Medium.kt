@@ -8,4 +8,5 @@ interface Medium {
     val description: String
     val genres: List<String>
     val releaseDate: String
+    val type: String
 }
