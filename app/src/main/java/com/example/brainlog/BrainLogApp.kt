@@ -18,6 +18,7 @@ object MainDestinations {
     const val MAIN_APP_ROUTE = "main_app"
 }
 
+
 @Composable
 fun BrainLogApp(
     authViewModel: AuthViewModel = viewModel()

@@ -50,7 +50,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.brainlog.viewmodel.MovieDetailViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import com.example.brainlog.model.MediumType
 import com.example.brainlog.viewmodel.MediaDetailUiState
@@ -58,6 +57,11 @@ import com.example.brainlog.model.Movie
 import com.example.brainlog.model.Series
 import com.example.brainlog.viewmodel.AddMediumToUserUiState
 import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.brainlog.viewmodel.MovieDetailViewModelFactory
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.ktx.firestore
+import com.google.firebase.ktx.Firebase
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,8 +69,15 @@ import kotlinx.coroutines.launch
 fun MediaDetailScreen(
     movieId: Int,
     mediaType: MediumType,
-    viewModel: MovieDetailViewModel = viewModel()
+    // viewModel: MovieDetailViewModel = viewModel() // ALTE Zeile
 ) {
+    // --- BEGINN DER ÄNDERUNGEN FÜR MANUELLE FACTORY ---
+    val firebaseAuth = remember { Firebase.auth }
+    val firebaseFirestore = remember { Firebase.firestore }
+    val movieDetailViewModelFactory = remember {
+        MovieDetailViewModelFactory(auth = firebaseAuth, db = firebaseFirestore)
+    }
+    val viewModel: MovieDetailViewModel = viewModel(factory = movieDetailViewModelFactory)
     val uiState by viewModel.uiState.collectAsState()
     val addMediumState by viewModel.addMediumToUserUiState.collectAsState() // State für Hinzufüge-Aktion
 

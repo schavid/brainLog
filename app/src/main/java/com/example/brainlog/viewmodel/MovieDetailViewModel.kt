@@ -2,6 +2,7 @@ package com.example.brainlog.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.brainlog.model.ApiClient
 import com.example.brainlog.model.MediaRepository
@@ -15,7 +16,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
-import dagger.hilt.android.lifecycle.HiltViewModel
 
 
 
@@ -34,8 +34,7 @@ sealed class AddMediumToUserUiState {
     object UserNotLoggedIn : AddMediumToUserUiState() // Spezifischer Fall
 }
 
-@HiltViewModel
-class MovieDetailViewModel @Inject constructor(
+class MovieDetailViewModel(
     private val repository: MediaRepository = MediaRepository(ApiClient.mediaApi),
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore
@@ -116,6 +115,20 @@ class MovieDetailViewModel @Inject constructor(
 
     fun reset() {
         _uiState.value = MediaDetailUiState.Idle
+    }
+}
+
+class MovieDetailViewModelFactory(
+    private val auth: FirebaseAuth,
+    private val db: FirebaseFirestore
+) : ViewModelProvider.Factory {
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(MovieDetailViewModel::class.java)) {
+            return MovieDetailViewModel(auth = auth, db = db) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }
 
