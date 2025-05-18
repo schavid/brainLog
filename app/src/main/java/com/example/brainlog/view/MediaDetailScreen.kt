@@ -15,11 +15,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FabPosition
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -27,6 +36,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +56,8 @@ import com.example.brainlog.model.MediumType
 import com.example.brainlog.viewmodel.MediaDetailUiState
 import com.example.brainlog.model.Movie
 import com.example.brainlog.model.Series
+import com.example.brainlog.viewmodel.AddMediumToUserUiState
+import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,6 +68,36 @@ fun MediaDetailScreen(
     viewModel: MovieDetailViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val addMediumState by viewModel.addMediumToUserUiState.collectAsState() // State für Hinzufüge-Aktion
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+
+    LaunchedEffect(addMediumState) {
+        when (val state = addMediumState) {
+            is AddMediumToUserUiState.Success -> {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Medium erfolgreich hinzugefügt!")
+                }
+                viewModel.resetAddMediumState() // State zurücksetzen, um wiederholte Nachrichten zu vermeiden
+            }
+            is AddMediumToUserUiState.Error -> {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Fehler: ${state.message}")
+                }
+                viewModel.resetAddMediumState()
+            }
+            is AddMediumToUserUiState.UserNotLoggedIn -> {
+                scope.launch {
+                    snackbarHostState.showSnackbar("Bitte zuerst anmelden.")
+                }
+                viewModel.resetAddMediumState()
+            }
+            else -> Unit // Idle oder Loading
+        }
+    }
+
 
 
     Scaffold(
@@ -78,6 +121,35 @@ fun MediaDetailScreen(
                 )
             )
         },
+        floatingActionButton = {
+            // Zeige den FAB nur an, wenn die Daten erfolgreich geladen wurden
+            if (uiState is MediaDetailUiState.Success) {
+                val medium = (uiState as MediaDetailUiState.Success).medium
+                FloatingActionButton(
+                    onClick = {
+                        // Rufe die ViewModel-Funktion auf, um das Medium hinzuzufügen
+                        viewModel.addMediumToUser(medium)
+                    },
+                    shape = CircleShape,
+                    containerColor = Color(0x00D04242),
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = 8.dp, // Schatten im Normalzustand
+                        pressedElevation = 12.dp, // Schatten, wenn gedrückt
+                        focusedElevation = 10.dp, // Schatten, wenn fokussiert
+                        hoveredElevation = 10.dp
+                    )
+
+                ) {
+                    // Ändere das Icon vielleicht zu einem "Add"-Icon
+                    Icon(
+                        imageVector = Icons.Filled.Add, // z.B. "Add" statt "Edit"
+                        contentDescription = "Medium hinzufügen"
+                    )
+                }
+            }
+        },
+        floatingActionButtonPosition = FabPosition.End,
         containerColor = Color.Transparent
     ) { innerPadding ->
         LaunchedEffect(Unit) {
@@ -245,6 +317,13 @@ fun MediaDetailScreen(
                             fontSize = 12.sp,
                             color = White
                         )
+
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.BottomCenter
+                        ) {
+
+                        }
                     }
                 }
 
@@ -258,7 +337,7 @@ fun MediaDetailScreen(
                             text = "Error: $errorMsg",
                             color = Color.Red,
                             modifier = Modifier.background(
-                                Color.White.copy(alpha = 0.8f),
+                                White.copy(alpha = 0.8f),
                                 RoundedCornerShape(8.dp)
                             ).padding(16.dp)
                         )

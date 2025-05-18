@@ -1,5 +1,6 @@
 package com.example.brainlog.view
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -10,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.text.style.TextAlign
@@ -63,6 +65,12 @@ fun Home(navController: NavController) {
                             // IconButton *innerhalb* der gestalteten Surface
                             IconButton(
                                 onClick = { onSearchExpandedChange(true) },
+                                modifier = Modifier
+                                    .shadow(
+                                        elevation = 4.dp,
+                                        shape = CircleShape,
+                                        clip = false
+                                    )
                             ) {
                                 Icon(
                                     Icons.Filled.Search,
@@ -96,6 +104,7 @@ fun Home(navController: NavController) {
                         SearchResultsList(results = results) { clickedMedium ->
                             val mediaType = clickedMedium.type
                             val mediaId = clickedMedium.id
+                            Log.d("HomeNavigation", "Navigating with ID: $mediaId, Type: ${mediaType.name}")
                             navController.navigate("mediaDetail/${mediaId}/${mediaType.name}")
                         }
                     }

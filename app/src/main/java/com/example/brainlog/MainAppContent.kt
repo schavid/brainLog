@@ -1,5 +1,6 @@
 package com.example.brainlog
 
+import android.util.Log
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -47,10 +48,12 @@ fun MainAppContent(
             composable("mediaDetail/{mediaId}/{mediaType}") { backStackEntry ->
                 val mediaID = backStackEntry.arguments?.getString("mediaId")?.toIntOrNull()
                 val mediaType = backStackEntry.arguments?.getString("mediaType")?.let { MediumType.valueOf(it) }
-
+                Log.d("MediaDetailNav", "Received raw ID: $mediaID, raw Type: $mediaType")
                 // Falls movieId oder mediaType null sind, handle diesen Fall
                 if (mediaID != null && mediaType != null) {
                     MediaDetailScreen(movieId = mediaID, mediaType = mediaType)
+                }  else {
+                    Log.e("MediaDetailNav", "Failed to parse arguments. Cannot show MediaDetailScreen. Parsed ID: $mediaID, Parsed Type: $mediaType") // <<< ERWEITERTES LOG
                 }
             }
         }

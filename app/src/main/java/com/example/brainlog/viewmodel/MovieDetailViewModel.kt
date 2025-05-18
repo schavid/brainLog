@@ -1,5 +1,6 @@
 package com.example.brainlog.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.brainlog.model.ApiClient
@@ -13,6 +14,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import javax.inject.Inject
+import dagger.hilt.android.lifecycle.HiltViewModel
+
 
 
 sealed class MediaDetailUiState {
@@ -30,8 +34,8 @@ sealed class AddMediumToUserUiState {
     object UserNotLoggedIn : AddMediumToUserUiState() // Spezifischer Fall
 }
 
-
-class MovieDetailViewModel(
+@HiltViewModel
+class MovieDetailViewModel @Inject constructor(
     private val repository: MediaRepository = MediaRepository(ApiClient.mediaApi),
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore
@@ -44,6 +48,7 @@ class MovieDetailViewModel(
     val addMediumToUserUiState: StateFlow<AddMediumToUserUiState> = _addMediumToUserUiState.asStateFlow()
 
     fun loadMovieDetail(mediaId: Int, type: MediumType) {
+        Log.d("MovieDetailVM", "loadMovieDetail called with ID: $mediaId, Type: $type")
         viewModelScope.launch {
             _uiState.value = MediaDetailUiState.Loading
             try {
@@ -72,6 +77,7 @@ class MovieDetailViewModel(
                     }
                 }
             }catch (e: Exception) {
+                Log.e("MovieDetailVM", "Error loading details for $mediaId ($type)", e)
                 _uiState.value = MediaDetailUiState.Error(e.message ?: "Unknown error")
             }
         }
