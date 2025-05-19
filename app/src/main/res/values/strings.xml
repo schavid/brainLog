@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">BrainLog</string>
+    <string name="default_web_client_id" translatable="false">1034289530728-6eq5d9m2gipvjao21uu825dmp3pprhk9.apps.googleusercontent.com</string>
 </resources>

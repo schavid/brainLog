@@ -2,6 +2,7 @@ package com.example.brainlog.view
 
 
 import android.app.Activity
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -37,6 +38,7 @@ import com.example.brainlog.viewmodel.AuthUiState
 import com.example.brainlog.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
@@ -47,8 +49,10 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingExcept
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.credentials.CredentialManager
+import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.GetCredentialInterruptedException
 import com.example.brainlog.R
 
 
@@ -81,6 +85,7 @@ fun AuthScreen(
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
+        Log.d("AuthScreenGoogle", "LAUNCHER CALLED. ResultCode: ${result.resultCode}")
         if (result.resultCode == Activity.RESULT_OK) {
             try {
                 result.data?.let { intent ->
@@ -251,12 +256,31 @@ fun AuthScreen(
                             .build()
                         try {
                             val result = credentialManager.getCredential(context, request)
-                            (result.credential as? GoogleIdTokenCredential)?.let {
-                                authViewModel.signInWithGoogle(it.idToken)
-                            } ?: authViewModel.resetStateToIdle()
+                            val actualCredential = result.credential
+                            var googleIdToken: String? = null
+
+                            if (actualCredential is GoogleIdTokenCredential) {
+                                googleIdToken = actualCredential.idToken
+                            } else if (actualCredential is CustomCredential &&
+                                actualCredential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                                try {
+                                    val googleIdTokenCredentialFromCustom = GoogleIdTokenCredential.createFrom(actualCredential.data)
+                                    googleIdToken = googleIdTokenCredentialFromCustom.idToken
+                                } catch (e: Exception) {
+                                    authViewModel.resetStateToIdle()
+                                }
+                            } else {
+                                authViewModel.resetStateToIdle()
+                            }
+
+                            googleIdToken?.let {
+                                authViewModel.signInWithGoogle(it)
+                            } ?: run {
+                                // Wenn googleIdToken immer noch null ist, aber actualCredential nicht,
+                                // und es nicht der erwartete Typ war oder das Parsen fehlschlug.
+                                authViewModel.resetStateToIdle()
+                            }
                         } catch (e: GetCredentialException) {
-                            // Der Launcher (googleSignInLauncher) wird bei Bedarf von getCredential ausgelöst.
-                            // Dieser Catch-Block ist für Fehler, die nicht zum Starten eines Intents führen.
                             authViewModel.resetStateToIdle()
                         } catch (e: Exception) {
                             authViewModel.resetStateToIdle()
@@ -266,15 +290,15 @@ fun AuthScreen(
                 modifier = Modifier.fillMaxWidth(),
                 enabled = uiState !is AuthUiState.Loading
             ) {
-                // Optional: Google Logo
                 Image(
-                    painter = painterResource(id = R.drawable.ic_google_logo), // Erstelle ic_google_logo.xml
+                    painter = painterResource(id = R.drawable.ic_google_logo),
                     contentDescription = "Google Logo",
                     modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Sign in with Google")
             }
+
         }
     }
 }
