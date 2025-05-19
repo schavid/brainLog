@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
@@ -30,6 +31,18 @@ val CustomTypography = Typography(
     ),
     bodyMedium = TextStyle(
         fontSize = 16.sp
+    ),
+    titleMedium = TextStyle(
+        fontSize = 15.sp,
+        fontFamily = FontFamily.Serif,
+        color = Color.White
+),
+    titleLarge = TextStyle(
+        fontSize = 26.sp,
+        fontFamily = FontFamily.Serif,
+        fontWeight = FontWeight.Bold,
+        color = Color.White
+
     )
     // Du kannst weitere Standard-Stile wie titleLarge, labelSmall usw. angeben
 )

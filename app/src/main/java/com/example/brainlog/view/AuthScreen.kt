@@ -85,7 +85,6 @@ fun AuthScreen(
     val googleSignInLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartIntentSenderForResult()
     ) { result ->
-        Log.d("AuthScreenGoogle", "LAUNCHER CALLED. ResultCode: ${result.resultCode}")
         if (result.resultCode == Activity.RESULT_OK) {
             try {
                 result.data?.let { intent ->

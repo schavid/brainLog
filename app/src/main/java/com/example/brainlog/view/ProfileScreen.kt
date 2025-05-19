@@ -5,11 +5,13 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
@@ -57,124 +60,133 @@ fun ProfileScreen(
     val uiState by userProfileViewModel.uiState.collectAsStateWithLifecycle()
     val userMediaListState by userProfileViewModel.userMediaListState.collectAsStateWithLifecycle()
 
+
+
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp), // Dieses Padding ist für den *Inhalt innerhalb* des Screens
-        verticalArrangement = Arrangement.Center,
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        when (uiState){
+
+        // Header mit Benutzername und Logout-Button
+        Column (
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+        ) {
+            if (uiState is UserProfileUiState.Success) {
+
+                Button(
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(4.dp)
+                        .height(34.dp),
+                    onClick = onNavigateToLogin,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                        contentDescription = "Logout Icon",
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.size(4.dp))
+
+                    Text("Logout", fontSize = 10.sp)
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+
+                val user = (uiState as UserProfileUiState.Success).userDocument
+                Text(
+                    "${user.username}'s WatchList",
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    style = CustomTypography.titleLarge
+                )
+            }
+
+
+        }
+
+        Spacer(modifier = Modifier.height(40.dp))
+
+        // Dynamischer Teil, abhängig vom uiState
+        when (uiState) {
             is UserProfileUiState.Loading -> {
                 CircularProgressIndicator()
                 Text("Loading Profile...")
             }
+
             is UserProfileUiState.Success -> {
-                val user: UserDocument = (uiState as UserProfileUiState.Success).userDocument
 
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    ){
-                        Text(user.username, style = CustomTypography.headlineLarge)
-
-                        Button(
-                            onClick = onNavigateToLogin, // Löst den Logout-Prozess aus
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                        ) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                                contentDescription = "Logout Icon",
-                                modifier = Modifier.size(ButtonDefaults.IconSize)
-                            )
-                            Spacer(modifier = Modifier.size(ButtonDefaults.IconSpacing))
-                            Text("Logout")
-                        }
-
-                    }
-
-                Text("WatchList", style = MaterialTheme.typography.headlineLarge)
+                Spacer(modifier = Modifier.height(8.dp))
 
                 when (val mediaState = userMediaListState) {
-                    is UserMediaListUiState.Idle -> {
-                        // Nichts anzeigen oder eine initiale Nachricht
-                    }
                     is UserMediaListUiState.Loading -> {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
-                        Text("Lade Medien...", modifier = Modifier.align(Alignment.CenterHorizontally))
+                        CircularProgressIndicator()
+                        Text("Lade Medien...")
                     }
+
                     is UserMediaListUiState.Success -> {
                         if (mediaState.mediaItems.isEmpty()) {
                             Text("Du hast noch keine Medien zu deiner Watchlist hinzugefügt.")
                         } else {
-                            FlowRow (
+                            FlowRow(
                                 modifier = Modifier.fillMaxSize(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp), // Abstand zwischen den Elementen
-                                verticalArrangement = Arrangement.spacedBy(8.dp), // Abstand zwischen den Zeilen
-
-                            // Damit die LazyColumn die Breite füllt
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                mediaState.mediaItems.forEach{ medium ->
-                                    // Erstelle eine Composable für ein einzelnes Listenelement
+                                mediaState.mediaItems.forEach { medium ->
                                     MediaListItem(
                                         medium = medium,
                                         onClick = {
                                             onNavigateToMediaDetail(medium.id, medium.type)
                                         }
                                     )
-                                    Spacer(modifier = Modifier.height(8.dp)) // Abstand zwischen Elementen
                                 }
                             }
                         }
                     }
+
                     is UserMediaListUiState.Error -> {
-                        Text(
-                            text = "Fehler beim Laden der Medien: ${mediaState.message}",
-                            color = MaterialTheme.colorScheme.error
-                        )
+                        Text("Fehler beim Laden der Medien: ${mediaState.message}")
                     }
+
                     is UserMediaListUiState.NoMediaFound -> {
                         Text("Keine Medien in deiner Watchlist gefunden.")
                     }
-                }
 
+                    is UserMediaListUiState.Idle -> Unit
+                }
             }
+
             is UserProfileUiState.Error -> {
-                Text(
-                    text = "Fehler:",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.error
-                )
-                Text(
-                    text = (uiState as UserProfileUiState.Error).message,
-                    color = MaterialTheme.colorScheme.error
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = { userProfileViewModel.fetchUserProfileThenMedia() }) { // ViewModel-Funktion umbenannt
+                Text("Fehler: ${(uiState as UserProfileUiState.Error).message}")
+                Button(onClick = { userProfileViewModel.fetchUserProfileThenMedia() }) {
                     Text("Erneut versuchen")
                 }
             }
+
             is UserProfileUiState.NotLoggedIn -> {
-                Text("Du bist nicht angemeldet.", style = MaterialTheme.typography.titleMedium)
-                Text("Bitte melde dich an, um dein Profil zu sehen.")
-                Spacer(modifier = Modifier.height(16.dp))
+                Text("Du bist nicht angemeldet.")
                 Button(onClick = onNavigateToLogin) {
                     Text("Zum Login")
                 }
             }
+
             is UserProfileUiState.ProfileNotFound -> {
-                Text("Profil nicht gefunden.", style = MaterialTheme.typography.titleMedium)
-                Text("Es scheint, als ob dein Profil noch nicht vollständig eingerichtet wurde.")
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = { userProfileViewModel.fetchUserProfileThenMedia() }) { // ViewModel-Funktion umbenannt
+                Text("Profil nicht gefunden.")
+                Button(onClick = { userProfileViewModel.fetchUserProfileThenMedia() }) {
                     Text("Erneut versuchen")
                 }
             }
-
         }
-
     }
 }
+
+
 
 @Composable
 fun MediaListItem(medium: Medium, onClick: () -> Unit) {
