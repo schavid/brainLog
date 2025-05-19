@@ -1,6 +1,7 @@
 package com.example.brainlog.view
 
 
+import android.app.Activity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,21 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.brainlog.viewmodel.AuthUiState
 import com.example.brainlog.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import com.google.android.libraries.identity.googleid.GoogleIdTokenParsingException
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import androidx.credentials.exceptions.GetCredentialException
+import com.example.brainlog.R
+
 
 @Composable
 fun AuthScreen(
@@ -53,11 +69,48 @@ fun AuthScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    val context = LocalContext.current
+    val credentialManager = remember { CredentialManager.create(context) }
+
     val currentErrorMessage = when (uiState) {
         is AuthUiState.Error -> (uiState as AuthUiState.Error).message
         else -> null
     }
     val isLoading = uiState is AuthUiState.Loading
+
+    val googleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            try {
+                result.data?.let { intent ->
+                    // Das Bundle aus dem Intent holen
+                    val bundle = intent.extras
+                    if (bundle != null) {
+                        // Jetzt das GoogleIdTokenCredential aus dem Bundle erstellen
+                        val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(bundle)
+                        val googleIdToken = googleIdTokenCredential.idToken
+                        authViewModel.signInWithGoogle(googleIdToken)
+                    } else {
+                        // Bundle war null, sollte bei Erfolg nicht passieren
+                        authViewModel.resetStateToIdle()
+                    }
+                } ?: run {
+                    // intent (result.data) war null
+                    authViewModel.resetStateToIdle()
+                }
+            } catch (e: GoogleIdTokenParsingException) {
+                authViewModel.resetStateToIdle()
+            } catch (e: Exception) {
+                authViewModel.resetStateToIdle()
+            }
+        } else {
+            authViewModel.resetStateToIdle()
+        }
+    }
+
+
+
 
     // Seiteneffekte basierend auf Änderungen des uiState vom ViewModel behandeln
 
@@ -141,7 +194,7 @@ fun AuthScreen(
                     isError = currentErrorMessage?.contains("username", ignoreCase = true) == true
                 )
             }
-            // --- Ende Benutzername-Feld ---
+
 
             // Spacer vor den Buttons/Indicator
             Spacer(modifier = Modifier.height(16.dp))
@@ -186,6 +239,43 @@ fun AuthScreen(
                     }
                 }
             }
+            Button(
+                onClick = {
+                    scope.launch {
+                        val googleIdOption = GetGoogleIdOption.Builder()
+                            .setFilterByAuthorizedAccounts(false)
+                            .setServerClientId(context.getString(R.string.default_web_client_id))
+                            .build()
+                        val request = GetCredentialRequest.Builder()
+                            .addCredentialOption(googleIdOption)
+                            .build()
+                        try {
+                            val result = credentialManager.getCredential(context, request)
+                            (result.credential as? GoogleIdTokenCredential)?.let {
+                                authViewModel.signInWithGoogle(it.idToken)
+                            } ?: authViewModel.resetStateToIdle()
+                        } catch (e: GetCredentialException) {
+                            // Der Launcher (googleSignInLauncher) wird bei Bedarf von getCredential ausgelöst.
+                            // Dieser Catch-Block ist für Fehler, die nicht zum Starten eines Intents führen.
+                            authViewModel.resetStateToIdle()
+                        } catch (e: Exception) {
+                            authViewModel.resetStateToIdle()
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = uiState !is AuthUiState.Loading
+            ) {
+                // Optional: Google Logo
+                Image(
+                    painter = painterResource(id = R.drawable.ic_google_logo), // Erstelle ic_google_logo.xml
+                    contentDescription = "Google Logo",
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Sign in with Google")
+            }
         }
     }
 }
+

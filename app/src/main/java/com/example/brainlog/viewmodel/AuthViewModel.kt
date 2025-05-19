@@ -17,6 +17,7 @@ import kotlinx.coroutines.tasks.await
 import com.example.brainlog.model.UserDocument
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -40,6 +41,42 @@ class AuthViewModel:  ViewModel(){
 
     private val _currentUser = MutableStateFlow<FirebaseUser?>(null)
     val currentUser: StateFlow<FirebaseUser?> = _currentUser.asStateFlow()
+
+
+    init {
+        val user = auth.currentUser
+        if (user != null) {
+            _uiState.value = AuthUiState.Success(user)
+            _currentUser.value = user
+        }
+    }
+
+    fun signInWithGoogle(idToken: String) {
+        _uiState.value = AuthUiState.Loading
+        viewModelScope.launch {
+            try {
+                val credential = GoogleAuthProvider.getCredential(idToken, null)
+                val authResult = auth.signInWithCredential(credential).await()
+                val firebaseUser = authResult.user
+
+                if (firebaseUser != null) {
+                        val userDoc = UserDocument(
+                            userId = firebaseUser.uid,
+                            email = firebaseUser.email ?: "",
+                            username = firebaseUser.displayName ?: "User_${firebaseUser.uid.take(5)}",
+                            addedMedias = emptyList()
+                        )
+                        saveUserData(firebaseUser.uid, userDoc)
+
+                    _uiState.value = AuthUiState.Success(firebaseUser)
+                } else {
+                    _uiState.value = AuthUiState.Error("Google Sign-In failed: Firebase user is null after successful credential sign-in.")
+                }
+            } catch (e: Exception) {
+                _uiState.value = AuthUiState.Error(e.localizedMessage ?: "Google Sign-In failed.")
+            }
+        }
+    }
 
 
     fun login(email: String, pass: String) {

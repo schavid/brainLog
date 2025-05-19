@@ -6,7 +6,6 @@
         <package android:name="com.google.android.gms" />
     </queries>
     <application
-        android:name="android.app."
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"

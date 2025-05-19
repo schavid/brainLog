@@ -69,9 +69,8 @@ import com.google.firebase.ktx.Firebase
 fun MediaDetailScreen(
     movieId: Int,
     mediaType: MediumType,
-    // viewModel: MovieDetailViewModel = viewModel() // ALTE Zeile
 ) {
-    // --- BEGINN DER ÄNDERUNGEN FÜR MANUELLE FACTORY ---
+
     val firebaseAuth = remember { Firebase.auth }
     val firebaseFirestore = remember { Firebase.firestore }
     val movieDetailViewModelFactory = remember {
@@ -142,7 +141,7 @@ fun MediaDetailScreen(
                         viewModel.addMediumToUser(medium)
                     },
                     shape = CircleShape,
-                    containerColor = Color(0x00D04242),
+                    containerColor = Color(0xFF490D0D),
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     elevation = FloatingActionButtonDefaults.elevation(
                         defaultElevation = 8.dp, // Schatten im Normalzustand
@@ -329,12 +328,6 @@ fun MediaDetailScreen(
                             color = White
                         )
 
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.BottomCenter
-                        ) {
-
-                        }
                     }
                 }
 
