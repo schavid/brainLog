@@ -9,11 +9,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.FlowRowScopeInstance.weight
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -84,6 +82,8 @@ fun ProfileScreen(
                 .wrapContentHeight()
         ) {
             if (uiState is UserProfileUiState.Success) {
+                val user = (uiState as UserProfileUiState.Success).userDocument
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -91,7 +91,7 @@ fun ProfileScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Spacer(modifier = Modifier.weight(1f))
-                    val user = (uiState as UserProfileUiState.Success).userDocument
+
                     val photoUrl = user?.photoUrl
 
                     if (photoUrl != null) {
@@ -104,6 +104,14 @@ fun ProfileScreen(
                             contentScale = ContentScale.Crop, // Skaliert das Bild, um den Kreis zu füllen
                             placeholder = painterResource(id = R.drawable.ic_placeholder_profile), // Optional: Platzhalterbild
                             error = painterResource(id = R.drawable.ic_placeholder_profile) // Optional: Bild bei Ladefehler
+                        )
+                    } else {
+                        Image( // Oder Icon, je nachdem was dein Platzhalter ist
+                            painter = painterResource(id = R.drawable.ic_placeholder_profile),
+                            contentDescription = "Default profile picture placeholder",
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
                         )
                     }
 
@@ -125,12 +133,12 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.size(4.dp))
 
                         Text("Logout", fontSize = 10.sp)
-                }
+                    }
 
 
                 }
+
                 Spacer(modifier = Modifier.height(16.dp))
-
 
                 Text(
                     "${user.username}'s WatchList",
@@ -158,8 +166,7 @@ fun ProfileScreen(
                 when (val mediaState = userMediaListState) {
                     is UserMediaListUiState.Loading -> {
                         CircularProgressIndicator()
-                        Text("Lade Medien...")
-                    }
+                        Text("Lade Medien...") }
 
                     is UserMediaListUiState.Success -> {
                         if (mediaState.mediaItems.isEmpty()) {
