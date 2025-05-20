@@ -8,6 +8,7 @@ data class UserDocument(
     val email: String = "",
     val username: String = "",
     val addedMedias: List<String> = emptyList(),
+    val photoUrl: String? = null,
     @ServerTimestamp
     val createdAt: Date? = null
 )

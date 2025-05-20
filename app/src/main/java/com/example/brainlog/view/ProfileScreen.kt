@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.FlowRowScopeInstance.weight
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
@@ -35,11 +38,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
+import com.example.brainlog.R
 import com.example.brainlog.model.Medium
 import com.example.brainlog.model.Movie
 import com.example.brainlog.model.Series
@@ -78,28 +84,54 @@ fun ProfileScreen(
                 .wrapContentHeight()
         ) {
             if (uiState is UserProfileUiState.Success) {
-
-                Button(
+                Row(
                     modifier = Modifier
-                        .align(Alignment.End)
-                        .padding(4.dp)
-                        .height(34.dp),
-                    onClick = onNavigateToLogin,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                        contentDescription = "Logout Icon",
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.size(4.dp))
+                    Spacer(modifier = Modifier.weight(1f))
+                    val user = (uiState as UserProfileUiState.Success).userDocument
+                    val photoUrl = user?.photoUrl
 
-                    Text("Logout", fontSize = 10.sp)
+                    if (photoUrl != null) {
+                        AsyncImage(
+                            model = photoUrl,
+                            contentDescription = "User profile picture",
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape), // Macht das Bild rund
+                            contentScale = ContentScale.Crop, // Skaliert das Bild, um den Kreis zu füllen
+                            placeholder = painterResource(id = R.drawable.ic_placeholder_profile), // Optional: Platzhalterbild
+                            error = painterResource(id = R.drawable.ic_placeholder_profile) // Optional: Bild bei Ladefehler
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Button(
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .height(34.dp),
+                        onClick = onNavigateToLogin,
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                            contentDescription = "Logout Icon",
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.size(4.dp))
+
+                        Text("Logout", fontSize = 10.sp)
+                }
+
+
                 }
                 Spacer(modifier = Modifier.height(16.dp))
 
-                val user = (uiState as UserProfileUiState.Success).userDocument
+
                 Text(
                     "${user.username}'s WatchList",
                     modifier = Modifier.align(Alignment.CenterHorizontally),

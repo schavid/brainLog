@@ -1,7 +1,7 @@
 package com.example.brainlog.viewmodel
 
 
-import android.util.Log
+
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -64,6 +64,7 @@ class AuthViewModel:  ViewModel(){
                             userId = firebaseUser.uid,
                             email = firebaseUser.email ?: "",
                             username = firebaseUser.displayName ?: "User_${firebaseUser.uid.take(5)}",
+                            photoUrl = firebaseUser.photoUrl?.toString(),
                             addedMedias = emptyList()
                         )
                         saveUserData(firebaseUser.uid, userDoc)
