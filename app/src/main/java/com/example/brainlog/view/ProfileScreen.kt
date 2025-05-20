@@ -44,6 +44,7 @@ import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.example.brainlog.R
 import com.example.brainlog.model.Medium
+import com.example.brainlog.model.MediumType
 import com.example.brainlog.model.Movie
 import com.example.brainlog.model.Series
 import com.example.brainlog.ui.theme.AppTextStyles
@@ -57,7 +58,7 @@ import com.example.brainlog.viewmodel.UserProfileUiState
 fun ProfileScreen(
     userProfileViewModel: ProfileScreenViewModel = viewModel(),
     onNavigateToLogin: () -> Unit,
-    onNavigateToMediaDetail: (id: Int, type: String) -> Unit
+    onNavigateToMediaDetail: (id: Int, type: MediumType) -> Unit
 ) {
     val uiState by userProfileViewModel.uiState.collectAsStateWithLifecycle()
     val userMediaListState by userProfileViewModel.userMediaListState.collectAsStateWithLifecycle()
