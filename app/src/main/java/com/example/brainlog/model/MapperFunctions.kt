@@ -37,7 +37,6 @@ fun TvShowDto.getDetailsDomainModel(): Series = Series(
         popularity = popularity,
         voteAverage = vote_average,
         voteCount = vote_count,
-        type = "Series"
     )
 
 

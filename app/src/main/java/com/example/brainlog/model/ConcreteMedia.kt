@@ -24,7 +24,7 @@ data class Movie(
     val rating: Double = 0.0,
     val votes: Int = 0,
     val tagline: String? = null,
-    override val type: String = "Movie",
+    override val type: MediumType = MediumType.MOVIE,
     override val globalID: String = "${apiProvider}_${type}_${id}",
 ) : Medium
 
@@ -51,7 +51,7 @@ data class Series(
     val popularity: Double = 0.0,
     val voteAverage: Double = 0.0,
     val voteCount: Int = 0,
-    override val type: String = "Series",
+    override val type: MediumType = MediumType.SERIES,
     override val globalID: String = "$apiProvider/_$type/_$id",
 ) : Medium
 

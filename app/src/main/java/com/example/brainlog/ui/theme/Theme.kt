@@ -23,29 +23,24 @@ private val DarkColorScheme = darkColorScheme(
     tertiary = Pink80
 )
 
-val CustomTypography = Typography(
-    headlineLarge = TextStyle(
-        fontSize = 28.sp,
-        fontWeight = FontWeight.Bold,
-        color = Color.White
-    ),
-    bodyMedium = TextStyle(
-        fontSize = 16.sp
-    ),
-    titleMedium = TextStyle(
-        fontSize = 15.sp,
-        fontFamily = FontFamily.Serif,
-        color = Color.White
-),
-    titleLarge = TextStyle(
-        fontSize = 26.sp,
+object AppTextStyles { // Ein object, um sie zu gruppieren
+    val CustomHeader = TextStyle(
+        fontSize = 25.sp,
         fontFamily = FontFamily.Serif,
         fontWeight = FontWeight.Bold,
         color = Color.White
-
     )
-    // Du kannst weitere Standard-Stile wie titleLarge, labelSmall usw. angeben
-)
+
+    val normal = TextStyle(
+        fontSize = 8.sp,
+        fontFamily = FontFamily.Serif,
+        fontWeight = FontWeight.Bold,
+        color = Color.White
+    )
+    // ... weitere benutzerdefinierte Stile
+}
+
+
 
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,
@@ -82,7 +77,7 @@ fun BrainLogTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = CustomTypography,
+        typography = Typography(),
         content = content
     )
 }

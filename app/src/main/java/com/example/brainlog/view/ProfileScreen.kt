@@ -5,7 +5,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -47,8 +46,7 @@ import com.example.brainlog.R
 import com.example.brainlog.model.Medium
 import com.example.brainlog.model.Movie
 import com.example.brainlog.model.Series
-import com.example.brainlog.model.UserDocument
-import com.example.brainlog.ui.theme.CustomTypography
+import com.example.brainlog.ui.theme.AppTextStyles
 import com.example.brainlog.viewmodel.ProfileScreenViewModel
 import com.example.brainlog.viewmodel.UserMediaListUiState
 import com.example.brainlog.viewmodel.UserProfileUiState
@@ -143,7 +141,7 @@ fun ProfileScreen(
                 Text(
                     "${user.username}'s WatchList",
                     modifier = Modifier.align(Alignment.CenterHorizontally),
-                    style = CustomTypography.titleLarge
+                    style = AppTextStyles.CustomHeader
                 )
             }
 
@@ -232,14 +230,13 @@ fun MediaListItem(medium: Medium, onClick: () -> Unit) {
 
     Column (
         modifier = Modifier
-            .width(100.dp)
-            .wrapContentHeight()
+            .size(100.dp, 150.dp)
             .clickable {
                 onClick()
             }
             .background(Color(0x505B231D), RoundedCornerShape(20.dp))
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(8.dp, 20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     )
     {
         val posterUrl = when (medium) {
@@ -254,13 +251,12 @@ fun MediaListItem(medium: Medium, onClick: () -> Unit) {
                 painter = rememberAsyncImagePainter(imageUrl),
                 contentDescription = medium.title,
                 modifier = Modifier
-                    .width(20.dp)
-                    .height(60.dp)
+                    .weight(0.8f)
                     .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.Inside,
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = medium.title, style = MaterialTheme.typography.titleMedium)
+        Text(text = medium.title, style = AppTextStyles.normal, modifier = Modifier.weight(0.2f))
     }
 }
