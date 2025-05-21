@@ -15,7 +15,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import javax.inject.Inject
 
 
 
@@ -26,12 +25,13 @@ sealed class MediaDetailUiState {
     data class Error(val message: String) : MediaDetailUiState()
 }
 
-sealed class AddMediumToUserUiState {
-    object Idle : AddMediumToUserUiState()
-    object Loading : AddMediumToUserUiState()
-    object Success : AddMediumToUserUiState()
-    data class Error(val message: String) : AddMediumToUserUiState()
-    object UserNotLoggedIn : AddMediumToUserUiState() // Spezifischer Fall
+sealed class UpdateUserMediaListUiState {
+    object Idle : UpdateUserMediaListUiState()
+    object Loading : UpdateUserMediaListUiState()
+    object AddSuccess : UpdateUserMediaListUiState()       // Spezifisch für Hinzufügen erfolgreich
+    object DeleteSuccess : UpdateUserMediaListUiState()
+    data class Error(val message: String) : UpdateUserMediaListUiState()
+    object UserNotLoggedIn : UpdateUserMediaListUiState()
 }
 
 class MovieDetailViewModel(
@@ -43,8 +43,8 @@ class MovieDetailViewModel(
     private val _uiState = MutableStateFlow<MediaDetailUiState>(MediaDetailUiState.Idle)
     val uiState: StateFlow<MediaDetailUiState> = _uiState.asStateFlow()
 
-    private val _addMediumToUserUiState = MutableStateFlow<AddMediumToUserUiState>(AddMediumToUserUiState.Idle)
-    val addMediumToUserUiState: StateFlow<AddMediumToUserUiState> = _addMediumToUserUiState.asStateFlow()
+    private val _updateUserMediaListUiState = MutableStateFlow<UpdateUserMediaListUiState>(UpdateUserMediaListUiState.Idle)
+    val updateUserMediaListUiState: StateFlow<UpdateUserMediaListUiState> = _updateUserMediaListUiState.asStateFlow()
 
     fun loadMovieDetail(mediaId: Int, type: MediumType) {
         Log.d("MovieDetailVM", "loadMovieDetail called with ID: $mediaId, Type: $type")
@@ -86,31 +86,65 @@ class MovieDetailViewModel(
         val currentUser: FirebaseUser? = auth.currentUser
 
         if (currentUser == null) {
-            _addMediumToUserUiState.value = AddMediumToUserUiState.UserNotLoggedIn
+            _updateUserMediaListUiState.value = UpdateUserMediaListUiState.UserNotLoggedIn
             return
         }
 
         if (medium.globalID.isBlank()) {
-            _addMediumToUserUiState.value = AddMediumToUserUiState.Error("Medium hat eine ungültige ID.")
+            // Wichtig: globalID muss im Medium Objekt korrekt gesetzt sein!
+            // z.B. movie_123, series_456
+            _updateUserMediaListUiState.value = UpdateUserMediaListUiState.Error("Medium hat eine ungültige GlobalID.")
             return
         }
 
-        _addMediumToUserUiState.value = AddMediumToUserUiState.Loading
+        _updateUserMediaListUiState.value = UpdateUserMediaListUiState.Loading
 
         viewModelScope.launch {
             try {
                 val userDocRef = db.collection("users").document(currentUser.uid)
                 userDocRef.update("addedMedias", FieldValue.arrayUnion(medium.globalID))
                     .await()
-                _addMediumToUserUiState.value = AddMediumToUserUiState.Success
+                _updateUserMediaListUiState.value = UpdateUserMediaListUiState.AddSuccess // Spezifischer Erfolgszustand
             } catch (e: Exception) {
-                _addMediumToUserUiState.value = AddMediumToUserUiState.Error(e.message ?: "Fehler beim Hinzufügen des Mediums")
+                Log.e("MovieDetailVM", "Error adding medium ${medium.globalID} to user ${currentUser.uid}", e)
+                _updateUserMediaListUiState.value = UpdateUserMediaListUiState.Error(e.message ?: "Fehler beim Hinzufügen des Mediums")
             }
         }
     }
 
-    fun resetAddMediumState() {
-        _addMediumToUserUiState.value = AddMediumToUserUiState.Idle
+
+    fun deleteMediumFromUser(medium: Medium) {
+        val currentUser: FirebaseUser? = auth.currentUser
+
+        if (currentUser == null) {
+            _updateUserMediaListUiState.value = UpdateUserMediaListUiState.UserNotLoggedIn
+            return
+        }
+
+        if (medium.globalID.isBlank()) {
+            // Wichtig: globalID muss im Medium Objekt korrekt gesetzt sein!
+            _updateUserMediaListUiState.value = UpdateUserMediaListUiState.Error("Medium hat eine ungültige GlobalID zum Löschen.")
+            return
+        }
+
+        _updateUserMediaListUiState.value = UpdateUserMediaListUiState.Loading
+
+        viewModelScope.launch {
+            try {
+                val userDocRef = db.collection("users").document(currentUser.uid)
+                // Firestore-Operation zum Entfernen eines Elements aus einem Array
+                userDocRef.update("addedMedias", FieldValue.arrayRemove(medium.globalID))
+                    .await()
+                _updateUserMediaListUiState.value = UpdateUserMediaListUiState.DeleteSuccess // Spezifischer Erfolgszustand
+            } catch (e: Exception) {
+                Log.e("MovieDetailVM", "Error deleting medium ${medium.globalID} from user ${currentUser.uid}", e)
+                _updateUserMediaListUiState.value = UpdateUserMediaListUiState.Error(e.message ?: "Fehler beim Entfernen des Mediums")
+            }
+        }
+    }
+
+    fun resetUpdateUserMediaListState() {
+        _updateUserMediaListUiState.value = UpdateUserMediaListUiState.Idle
     }
 
     fun reset() {

@@ -17,6 +17,7 @@ data class Movie(
     override val description: String = "",
     override val genres: List<String> = emptyList(),
     override val releaseDate: String = "",
+    override var isFinished: Boolean = false,
 
     val runtime: Int? = null,
     val posterUrl: String? = null,
@@ -40,6 +41,7 @@ data class Series(
     override val description: String = "",
     override val genres: List<String> = emptyList(),
     override val releaseDate: String = "",
+    override var isFinished: Boolean = false,
 
     val originalName: String = "",
     val posterUrl: String? = null,
@@ -52,6 +54,6 @@ data class Series(
     val voteAverage: Double = 0.0,
     val voteCount: Int = 0,
     override val type: MediumType = MediumType.SERIES,
-    override val globalID: String = "$apiProvider/_$type/_$id",
+    override val globalID: String = "${apiProvider}_${type}_${id}",
 ) : Medium
 

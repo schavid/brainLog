@@ -41,7 +41,7 @@ fun MainAppContent(
                 ProfileScreen(
                     onNavigateToLogin = onLogout,
                     onNavigateToMediaDetail = { mediaId, mediaType ->
-                        navController.navigate("mediaDetail/$mediaId/$mediaType.name")
+                        navController.navigate("mediaDetail/$mediaId/${mediaType.name}")
                     }
                 )
             }
