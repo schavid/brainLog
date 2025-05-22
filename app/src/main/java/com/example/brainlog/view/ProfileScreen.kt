@@ -51,6 +51,9 @@ import com.example.brainlog.ui.theme.AppTextStyles
 import com.example.brainlog.viewmodel.ProfileScreenViewModel
 import com.example.brainlog.viewmodel.UserMediaListUiState
 import com.example.brainlog.viewmodel.UserProfileUiState
+import androidx.activity.compose.BackHandler
+import androidx.compose.material3.Scaffold
+import kotlinx.coroutines.flow.Flow
 
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -63,166 +66,141 @@ fun ProfileScreen(
     val uiState by userProfileViewModel.uiState.collectAsStateWithLifecycle()
     val userMediaListState by userProfileViewModel.userMediaListState.collectAsStateWithLifecycle()
 
+    val selectedMediaGlobalIds by userProfileViewModel.selectedMediaGlobalIds.collectAsStateWithLifecycle()
+    val isInSelectionMode by userProfileViewModel.isInSelectionMode.collectAsStateWithLifecycle()
 
+    BackHandler(enabled = isInSelectionMode) {
+        userProfileViewModel.clearSelection()
+    }
 
+    Scaffold(
+        topBar = {
+            if (isInSelectionMode) {
+                SelectionModeTopAppBar(
+                    selectedCount = selectedMediaGlobalIds.size,
+                    onCloseSelectionMode = { userProfileViewModel.clearSelection() },
+                    onDeleteSelected = { userProfileViewModel.deleteSelectedMedia() },
+                    onMarkAsFinishedSelected = { userProfileViewModel.markSelectedAsFinished() }
+                )
+            } else {
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+            }
+        }
+    ) { paddingValues ->
 
-        // Header mit Benutzername und Logout-Button
-        Column (
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (uiState is UserProfileUiState.Success) {
+
+
+            if (!isInSelectionMode && uiState is UserProfileUiState.Success) {
                 val user = (uiState as UserProfileUiState.Success).userDocument
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    val photoUrl = user?.photoUrl
-
-                    if (photoUrl != null) {
-                        AsyncImage(
-                            model = photoUrl,
-                            contentDescription = "User profile picture",
-                            modifier = Modifier
-                                .size(50.dp)
-                                .clip(CircleShape), // Macht das Bild rund
-                            contentScale = ContentScale.Crop, // Skaliert das Bild, um den Kreis zu füllen
-                            placeholder = painterResource(id = R.drawable.ic_placeholder_profile), // Optional: Platzhalterbild
-                            error = painterResource(id = R.drawable.ic_placeholder_profile) // Optional: Bild bei Ladefehler
-                        )
-                    } else {
-                        Image( // Oder Icon, je nachdem was dein Platzhalter ist
-                            painter = painterResource(id = R.drawable.ic_placeholder_profile),
-                            contentDescription = "Default profile picture placeholder",
-                            modifier = Modifier
-                                .size(50.dp)
-                                .clip(CircleShape)
-                        )
+                ProfileHeader(
+                    username = user.username,
+                    photoUrl = user.photoUrl,
+                    onLogoutClick = {
+                        onNavigateToLogin()
                     }
-
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Button(
-                        modifier = Modifier
-                            .padding(4.dp)
-                            .height(34.dp),
-                        onClick = onNavigateToLogin,
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                            contentDescription = "Logout Icon",
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.size(4.dp))
-
-                        Text("Logout", fontSize = 10.sp)
-                    }
-
-
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    "${user.username}'s WatchList",
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    style = AppTextStyles.CustomHeader
                 )
             }
 
 
-        }
+            Spacer(modifier = Modifier.height(if (isInSelectionMode) 8.dp else 20.dp))
 
-        Spacer(modifier = Modifier.height(40.dp))
+            when (uiState) { // Variable für Smart Cast
 
-        // Dynamischer Teil, abhängig vom uiState
-        when (uiState) {
-            is UserProfileUiState.Loading -> {
-                CircularProgressIndicator()
-                Text("Loading Profile...")
-            }
+                is UserProfileUiState.Loading -> {
+                    CircularProgressIndicator()
+                    Text("Loading Profile...")
+                }
 
-            is UserProfileUiState.Success -> {
+                is UserProfileUiState.Success -> {
+                    val user = (uiState as UserProfileUiState.Success).userDocument
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "${user.username}'s Watchlist",
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                        style = AppTextStyles.CustomHeader
+                    )
 
-                when (val mediaState = userMediaListState) {
-                    is UserMediaListUiState.Loading -> {
-                        CircularProgressIndicator()
-                        Text("Lade Medien...") }
+                    when (val mediaState = userMediaListState) {
+                        is UserMediaListUiState.Loading -> {
+                            CircularProgressIndicator()
+                            Text("Lade Medien...") }
 
-                    is UserMediaListUiState.Success -> {
-                        if (mediaState.mediaItems.isEmpty()) {
-                            Text("Du hast noch keine Medien zu deiner Watchlist hinzugefügt.")
-                        } else {
-                            FlowRow(
-                                modifier = Modifier.fillMaxSize(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                mediaState.mediaItems.forEach { medium ->
-                                    MediaListItem(
-                                        medium = medium,
-                                        onClick = {
-                                            onNavigateToMediaDetail(medium.id, medium.type)
-                                        }
-                                    )
+                        is UserMediaListUiState.Success -> {
+                            if (mediaState.mediaItems.isEmpty()) {
+                                Text("Du hast noch keine Medien zu deiner Watchlist hinzugefügt.")
+                            } else {
+                                FlowRow(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                                ) {
+                                    mediaState.mediaItems.forEach{ medium ->
+                                        MediaListItem(
+                                            medium = medium,
+                                            isSelected = selectedMediaGlobalIds.contains(medium.globalID),
+                                            isInSelectionMode = isInSelectionMode,
+                                            onClick = {
+                                                if (isInSelectionMode) {
+                                                    userProfileViewModel.toggleMediaSelection(medium)
+                                                } else {
+                                                    onNavigateToMediaDetail(medium.id, medium.type)
+                                                }
+                                            },
+                                            onLongClick = {
+                                                userProfileViewModel.toggleMediaSelection(medium)
+                                            }
+                                        )
+                                    }
                                 }
                             }
                         }
+
+                        is UserMediaListUiState.Error -> {
+                            Text("Fehler beim Laden der Medien: ${mediaState.message}")
+                        }
+
+                        is UserMediaListUiState.NoMediaFound -> {
+                            Text("Keine Medien in deiner Watchlist gefunden.")
+                        }
+
+                        is UserMediaListUiState.Idle -> Unit
                     }
+                }
 
-                    is UserMediaListUiState.Error -> {
-                        Text("Fehler beim Laden der Medien: ${mediaState.message}")
+                is UserProfileUiState.Error -> {
+                    Text("Fehler: ${(uiState as UserProfileUiState.Error).message}")
+                    Button(onClick = { userProfileViewModel.fetchUserProfileThenMedia() }) {
+                        Text("Erneut versuchen")
                     }
+                }
 
-                    is UserMediaListUiState.NoMediaFound -> {
-                        Text("Keine Medien in deiner Watchlist gefunden.")
+                is UserProfileUiState.NotLoggedIn -> {
+                    Text("Du bist nicht angemeldet.")
+                    Button(onClick = onNavigateToLogin) {
+                        Text("Zum Login")
                     }
-
-                    is UserMediaListUiState.Idle -> Unit
                 }
-            }
 
-            is UserProfileUiState.Error -> {
-                Text("Fehler: ${(uiState as UserProfileUiState.Error).message}")
-                Button(onClick = { userProfileViewModel.fetchUserProfileThenMedia() }) {
-                    Text("Erneut versuchen")
-                }
-            }
-
-            is UserProfileUiState.NotLoggedIn -> {
-                Text("Du bist nicht angemeldet.")
-                Button(onClick = onNavigateToLogin) {
-                    Text("Zum Login")
-                }
-            }
-
-            is UserProfileUiState.ProfileNotFound -> {
-                Text("Profil nicht gefunden.")
-                Button(onClick = { userProfileViewModel.fetchUserProfileThenMedia() }) {
-                    Text("Erneut versuchen")
+                is UserProfileUiState.ProfileNotFound -> {
+                    Text("Profil nicht gefunden.")
+                    Button(onClick = { userProfileViewModel.fetchUserProfileThenMedia() }) {
+                        Text("Erneut versuchen")
+                    }
                 }
             }
         }
+
     }
-}
+
+
 
 
 
