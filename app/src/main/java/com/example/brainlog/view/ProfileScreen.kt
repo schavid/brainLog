@@ -56,8 +56,15 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import kotlinx.coroutines.flow.Flow
+import androidx.compose.material.icons.filled.DoneAll
 
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -299,4 +306,37 @@ fun MediaListItem(medium: Medium,
     ) {
 
     }
+}
+
+// TopAppBar für den Auswahlmodus
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
+@Composable
+fun SelectionModeTopAppBar(
+    selectedCount: Int,
+    onCloseSelectionMode: () -> Unit,
+    onDeleteSelected: () -> Unit,
+    onMarkAsFinishedSelected: () -> Unit
+) {
+    TopAppBar(
+        title = { Text("$selectedCount ausgewählt") },
+        navigationIcon = {
+            IconButton(onClick = onCloseSelectionMode) {
+                Icon(Icons.Filled.Close, contentDescription = "Auswahlmodus schließen")
+            }
+        },
+        actions = {
+            IconButton(onClick = onMarkAsFinishedSelected) {
+                Icon(Icons.Filled.DoneAll, contentDescription = "Als fertig markieren") // Passendes Icon
+            }
+            IconButton(onClick = onDeleteSelected) {
+                Icon(Icons.Filled.Delete, contentDescription = "Ausgewählte löschen")
+            }
+        },
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer, // Passende Farbe
+            titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    )
 }
