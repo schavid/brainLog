@@ -52,6 +52,10 @@ import com.example.brainlog.viewmodel.ProfileScreenViewModel
 import com.example.brainlog.viewmodel.UserMediaListUiState
 import com.example.brainlog.viewmodel.UserProfileUiState
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Scaffold
 import kotlinx.coroutines.flow.Flow
 
@@ -199,43 +203,100 @@ fun ProfileScreen(
         }
 
     }
-
-
-
-
+}
 
 @Composable
-fun MediaListItem(medium: Medium, onClick: () -> Unit) {
+fun ProfileHeader(
+    username: String,
+    photoUrl: String?,
+    onLogoutClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+            .wrapContentHeight()
+            .padding(top = 16.dp),
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.End,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (photoUrl != null) {
+                AsyncImage(
+                    model = photoUrl,
+                    contentDescription = "Profilbild von $username",
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                    placeholder = painterResource(R.drawable.ic_placeholder_profile),
+                    error = painterResource(R.drawable.ic_placeholder_profile)
+                )
+            } else {
+                Image(
+                    painter = painterResource(R.drawable.ic_placeholder_profile),
+                    contentDescription = "Profilbild von $username",
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape),
+                )
+            }
 
-    Column (
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Button(
+                modifier = Modifier
+                    .padding(4.dp)
+                    .height(34.dp),
+                onClick = onLogoutClick,
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+            ) {
+
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                    contentDescription = "Logout",
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun MediaListItem(medium: Medium,
+                  onClick: () -> Unit,
+                  isSelected: Boolean,
+                  isInSelectionMode: Boolean,
+                  onLongClick: () -> Unit
+) {
+    Box(
         modifier = Modifier
             .size(100.dp, 150.dp)
-            .clickable {
-                onClick()
-            }
-            .background(Color(0x505B231D), RoundedCornerShape(20.dp))
-            .padding(8.dp, 20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    )
-    {
-        val posterUrl = when (medium) {
-            is Movie -> medium.posterUrl
-            is Series -> medium.posterUrl
-            else -> null
-        }
-
-        posterUrl?.let { path ->
-            val imageUrl = "https://image.tmdb.org/t/p/w500$path"
-            Image(
-                painter = rememberAsyncImagePainter(imageUrl),
-                contentDescription = medium.title,
-                modifier = Modifier
-                    .weight(0.8f)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Inside,
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0x505B231D))
+            .then(
+                if (isSelected && isInSelectionMode) {
+                    Modifier.border(
+                        width = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                } else Modifier
             )
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(text = medium.title, style = AppTextStyles.normal, modifier = Modifier.weight(0.2f))
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
+    ) {
+
     }
 }
