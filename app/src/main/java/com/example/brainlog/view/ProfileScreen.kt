@@ -64,7 +64,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import kotlinx.coroutines.flow.Flow
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Visibility
@@ -89,6 +88,7 @@ fun ProfileScreen(
     }
 
     Scaffold(
+        containerColor = Color.Transparent,
         topBar = {
             if (isInSelectionMode) {
                 SelectionModeTopAppBar(
@@ -415,7 +415,8 @@ fun SelectionModeTopAppBar(
         },
         actions = {
             IconButton(onClick = onMarkAsFinishedSelected) {
-                Icon(Icons.Filled.DoneAll, contentDescription = "Als fertig markieren") // Passendes Icon
+                Icon(Icons.Filled.DoneAll, contentDescription = "Als fertig markieren")
+                Text("finished")// Passendes Icon
             }
             IconButton(onClick = onDeleteSelected) {
                 Icon(Icons.Filled.Delete, contentDescription = "Ausgewählte löschen")
