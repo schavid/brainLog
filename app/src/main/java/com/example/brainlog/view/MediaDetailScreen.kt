@@ -55,10 +55,10 @@ import com.example.brainlog.model.MediumType
 import com.example.brainlog.viewmodel.MediaDetailUiState
 import com.example.brainlog.model.Movie
 import com.example.brainlog.model.Series
-import com.example.brainlog.viewmodel.AddMediumToUserUiState
 import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.brainlog.viewmodel.MovieDetailViewModelFactory
+import com.example.brainlog.viewmodel.UpdateUserMediaListUiState
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
@@ -78,33 +78,33 @@ fun MediaDetailScreen(
     }
     val viewModel: MovieDetailViewModel = viewModel(factory = movieDetailViewModelFactory)
     val uiState by viewModel.uiState.collectAsState()
-    val addMediumState by viewModel.addMediumToUserUiState.collectAsState() // State für Hinzufüge-Aktion
+    val updatedUserMediaList by viewModel.updateUserMediaListUiState.collectAsState() // State für Hinzufüge-Aktion
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
 
-    LaunchedEffect(addMediumState) {
-        when (val state = addMediumState) {
-            is AddMediumToUserUiState.Success -> {
+    LaunchedEffect(updatedUserMediaList) {
+        when (val state = updatedUserMediaList) {
+            is UpdateUserMediaListUiState.AddSuccess -> {
                 scope.launch {
                     snackbarHostState.showSnackbar("Medium erfolgreich hinzugefügt!")
                 }
-                viewModel.resetAddMediumState() // State zurücksetzen, um wiederholte Nachrichten zu vermeiden
+                viewModel.resetUpdateUserMediaListState() // State zurücksetzen, um wiederholte Nachrichten zu vermeiden
             }
-            is AddMediumToUserUiState.Error -> {
+            is UpdateUserMediaListUiState.Error -> {
                 scope.launch {
                     snackbarHostState.showSnackbar("Fehler: ${state.message}")
                 }
-                viewModel.resetAddMediumState()
+                viewModel.resetUpdateUserMediaListState()
             }
-            is AddMediumToUserUiState.UserNotLoggedIn -> {
+            is UpdateUserMediaListUiState.UserNotLoggedIn -> {
                 scope.launch {
                     snackbarHostState.showSnackbar("Bitte zuerst anmelden.")
                 }
-                viewModel.resetAddMediumState()
+                viewModel.resetUpdateUserMediaListState()
             }
-            else -> Unit // Idle oder Loading
+            else -> Unit
         }
     }
 
