@@ -76,5 +76,6 @@ dependencies {
     implementation( libs.googleid.v110)
     implementation("androidx.compose.material:material-icons-core:1.6.7") // Or your Compose version
     implementation("androidx.compose.material:material-icons-extended:1.6.7")
+    implementation ("com.google.android.gms:play-services-auth:20.7.0")
 
 }

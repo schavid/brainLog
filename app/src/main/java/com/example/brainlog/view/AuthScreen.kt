@@ -54,6 +54,9 @@ import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
 import androidx.credentials.exceptions.GetCredentialInterruptedException
 import com.example.brainlog.R
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.android.gms.common.api.ApiException
 
 
 @Composable
@@ -61,6 +64,9 @@ fun AuthScreen(
     authViewModel: AuthViewModel = viewModel(),
     onAuthSuccess: () -> Unit
 ) {
+
+
+
     val uiState by authViewModel.uiState.collectAsState()
 
 
@@ -75,6 +81,44 @@ fun AuthScreen(
 
     val context = LocalContext.current
     val credentialManager = remember { CredentialManager.create(context) }
+
+    val googleSignInClient = remember {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(context.getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+        GoogleSignIn.getClient(context, gso)
+    }
+
+    val fallbackGoogleSignInLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        Log.d("AuthScreen", "Fallback: ActivityResult erhalten. ResultCode: ${result.resultCode}") // NEU
+        if (result.resultCode == Activity.RESULT_OK) {
+            Log.d("AuthScreen", "Fallback: ResultCode ist RESULT_OK.") // NEU
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                Log.d("AuthScreen", "Fallback: GoogleSignInAccount erhalten: ${account?.email}") // NEU
+                val idToken = account?.idToken
+                Log.d("AuthScreen", "Fallback GoogleSignIn idToken: $idToken") // Wichtig!
+
+                if (idToken != null) {
+                    Log.d("AuthScreen", "Fallback: idToken ist NICHT null, rufe ViewModel auf.") // NEU
+                    authViewModel.signInWithGoogle(idToken)
+                } else {
+                    Log.w("AuthScreen", "Fallback: idToken IST NULL.") // Wichtig!
+                    authViewModel.resetStateToIdle()
+                }
+            } catch (e: ApiException) {
+                Log.e("AuthScreen", "Fallback: ApiException beim Holen des Accounts/Tokens.", e) // Wichtig!
+                authViewModel.resetStateToIdle()
+            }
+        } else {
+            Log.w("AuthScreen", "Fallback: ResultCode ist NICHT RESULT_OK.") // Wichtig!
+            authViewModel.resetStateToIdle()
+        }
+    }
 
     val currentErrorMessage = when (uiState) {
         is AuthUiState.Error -> (uiState as AuthUiState.Error).message
@@ -275,12 +319,12 @@ fun AuthScreen(
                             googleIdToken?.let {
                                 authViewModel.signInWithGoogle(it)
                             } ?: run {
-                                // Wenn googleIdToken immer noch null ist, aber actualCredential nicht,
-                                // und es nicht der erwartete Typ war oder das Parsen fehlschlug.
                                 authViewModel.resetStateToIdle()
                             }
                         } catch (e: GetCredentialException) {
-                            authViewModel.resetStateToIdle()
+                            // Fallback to classic Google Sign-In
+                            val signInIntent = googleSignInClient.signInIntent
+                            fallbackGoogleSignInLauncher.launch(signInIntent)
                         } catch (e: Exception) {
                             authViewModel.resetStateToIdle()
                         }
@@ -297,6 +341,7 @@ fun AuthScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Sign in with Google")
             }
+
 
         }
     }

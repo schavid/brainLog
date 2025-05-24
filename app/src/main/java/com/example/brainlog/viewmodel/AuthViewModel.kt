@@ -2,6 +2,7 @@ package com.example.brainlog.viewmodel
 
 
 
+import android.util.Log
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -15,6 +16,7 @@ import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import com.example.brainlog.model.UserDocument
+import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.GoogleAuthProvider
@@ -52,29 +54,46 @@ class AuthViewModel:  ViewModel(){
     }
 
     fun signInWithGoogle(idToken: String) {
-        _uiState.value = AuthUiState.Loading
-        viewModelScope.launch {
+        _uiState.value = AuthUiState.Loading // Zustand wird auf Laden gesetzt
+        viewModelScope.launch { // Startet eine Coroutine
             try {
+                // 1. Firebase-Anmeldeinformationen aus dem Google idToken erstellen
                 val credential = GoogleAuthProvider.getCredential(idToken, null)
+
+                // 2. Mit den Anmeldeinformationen bei Firebase anmelden (asynchron mit await)
                 val authResult = auth.signInWithCredential(credential).await()
-                val firebaseUser = authResult.user
+                val firebaseUser = authResult.user // Firebase-Benutzerobjekt abrufen
 
-                if (firebaseUser != null) {
-                        val userDoc = UserDocument(
-                            userId = firebaseUser.uid,
-                            email = firebaseUser.email ?: "",
-                            username = firebaseUser.displayName ?: "User_${firebaseUser.uid.take(5)}",
-                            photoUrl = firebaseUser.photoUrl?.toString(),
-                            addedMedias = emptyList()
-                        )
-                        saveUserData(firebaseUser.uid, userDoc)
+                if (firebaseUser != null) { // Sollte nach erfolgreichem signInWithCredential nicht null sein
+                    // 3. Benutzerdokument für Firestore/Datenbank erstellen
+                    val userDoc = UserDocument(
+                        userId = firebaseUser.uid,
+                        email = firebaseUser.email ?: "",
+                        // Standard-Benutzername, falls displayName nicht vorhanden
+                        username = firebaseUser.displayName ?: "User_${firebaseUser.uid.take(5)}",
+                        photoUrl = firebaseUser.photoUrl?.toString(),
+                        addedMedias = emptyList()
+                    )
+                    // 4. Benutzerdaten speichern (z.B. in Firestore)
+                    saveUserData(firebaseUser.uid, userDoc) // Ist dies eine suspend-Funktion?
 
+                    // 5. Zustand auf Erfolg setzen
                     _uiState.value = AuthUiState.Success(firebaseUser)
                 } else {
+                    // Dieser Fall ist sehr unwahrscheinlich, wenn authResult erfolgreich war
                     _uiState.value = AuthUiState.Error("Google Sign-In failed: Firebase user is null after successful credential sign-in.")
                 }
-            } catch (e: Exception) {
-                _uiState.value = AuthUiState.Error(e.localizedMessage ?: "Google Sign-In failed.")
+            } catch (e: Exception) { // Fehlerbehandlung
+                // 6. Bei jeglicher Exception während des try-Blocks: Zustand auf Fehler setzen
+                Log.e("AuthViewModel", "Error during Google Sign-In or user data save", e) // Wichtig: Exception loggen!
+                val errorMessage = when (e) {
+                    is FirebaseAuthUserCollisionException -> "Ein Konto mit dieser E-Mail-Adresse existiert bereits und verwendet eine andere Anmeldemethode."
+                    is FirebaseNetworkException -> "Netzwerkfehler. Bitte überprüfe deine Internetverbindung."
+                    is FirebaseAuthInvalidCredentialsException -> "Ungültige Google-Anmeldeinformationen. Bitte versuche es erneut."
+                    // TODO: Weitere spezifische Firebase-Exceptions hier behandeln
+                    else -> e.localizedMessage ?: "Unbekannter Fehler beim Google Sign-In."
+                }
+                _uiState.value = AuthUiState.Error(errorMessage)
             }
         }
     }
