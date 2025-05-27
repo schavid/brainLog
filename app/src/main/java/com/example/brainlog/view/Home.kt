@@ -1,6 +1,10 @@
 package com.example.brainlog.view
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -17,106 +21,115 @@ import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.brainlog.viewmodel.SearchUiState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.brainlog.viewmodel.SearchUiState
 import com.example.brainlog.viewmodel.SearchViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun Home(navController: NavController) {
     val viewModel: SearchViewModel = viewModel()
     val searchState by viewModel.uiState.collectAsState()
 
-    SearchLogic(viewModel = viewModel) { isSearchExpanded, searchText, onSearchExpandedChange, onSearchTextChange ->
-        Column(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Surface(
+    SearchLogic(viewModel = viewModel) { isSearchExpanded, searchText, currentSelectedSearchType, onSearchExpandedChange, onSearchTextChange, onSearchTypeChange ->
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Oberer Bereich für Titel/Icon oder Suchleiste
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(64.dp),
-                color = Color.Transparent
+                    .wrapContentHeight() // Passt Höhe an den sichtbaren Inhalt an
+                    .padding(vertical = 8.dp, horizontal = 12.dp) // Etwas Padding für den gesamten Bereich
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 4.dp)
+                // Zustand 1: Titel und Such-Icon (eingeklappt)
+                // In Home.kt, Zeile 45
+                androidx.compose.animation.AnimatedVisibility( // Vollqualifizierter Name
+                    visible = !isSearchExpanded,
+                    enter = fadeIn(animationSpec = tween(durationMillis = 300)),
+                    exit = fadeOut(animationSpec = tween(durationMillis = 200))
                 ) {
-                    if (!isSearchExpanded) {
+                    // Dein Row-Code für Titel und Such-Icon hier
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 8.dp)
+                            .height(56.dp), // Beispielhöhe
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
                         Text(
                             text = "BrainLog",
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .align(Alignment.TopCenter)
-                                .padding(top = 4.dp),
-                            color = White,
-                            fontSize = 23.sp
+                            fontSize = 23.sp,
+                            color = Color.White // Annahme basierend auf deinem vorherigen Styling
+                            // Füge hier deine anderen Text-Styles ein
                         )
                         Surface(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(top = 8.dp, end = 16.dp)
-                                .size(40.dp),
+                            modifier = Modifier.size(40.dp),
                             shape = CircleShape,
-                            color = Color(0x80D04242),
+                            color = Color(0x80D04242), // Deine Farbe
                             tonalElevation = 4.dp,
                         ) {
-                            // IconButton *innerhalb* der gestalteten Surface
-                            IconButton(
-                                onClick = { onSearchExpandedChange(true) },
-                                modifier = Modifier
-                                    .shadow(
-                                        elevation = 4.dp,
-                                        shape = CircleShape,
-                                        clip = false
-                                    )
-                            ) {
-                                Icon(
-                                    Icons.Filled.Search,
-                                    contentDescription = "Search",
-                                    tint = White
-                                )
+                            IconButton(onClick = { onSearchExpandedChange(true) }) {
+                                Icon(Icons.Filled.Search, contentDescription = "Suche öffnen", tint = Color.White)
                             }
                         }
                     }
-                        SearchBar(
-                            isSearchExpanded = isSearchExpanded,
-                            searchText = searchText,
-                            onSearchExpandedChange = onSearchExpandedChange,
-                            onSearchTextChange = onSearchTextChange,
-                        )
-
                 }
-            }
 
+                // Zustand 2: SearchBar (ausgeklappt)
+                // Die SearchBar selbst hat eine interne AnimatedVisibility für ihren Inhalt (Textfeld + Chips)
+                // Wir müssen hier nur sicherstellen, dass die SearchBar-Komponente im Kompositionsbaum ist,
+                // wenn isSearchExpanded true ist. Ihre eigene Animation kümmert sich um das Einblenden.
+                // Wenn !isSearchExpanded, ist die SearchBar zwar im Baum, aber ihr Inhalt unsichtbar.
+                // Um einen "Sprung" zu vermeiden, wenn die Höhe sich ändert, könnte man der SearchBar eine
+                // minimale Höhe geben oder die äußere Box mit animateContentSize() versehen.
+                // Für den Anfang ist es so aber oft schon besser:
+                if (isSearchExpanded) { // Rendere SearchBar nur wenn sie expandiert ist, um Layout-Überraschungen zu minimieren
+                    SearchBar(
+                        isSearchExpanded = isSearchExpanded, // true hier
+                        searchText = searchText,
+                        onSearchExpandedChange = onSearchExpandedChange,
+                        onSearchTextChange = onSearchTextChange,
+                        selectedSearchType = currentSelectedSearchType,
+                        onSearchTypeSelected = onSearchTypeChange
+                    )
+                }
+            } // Ende des oberen Box-Containers
+
+            // Suchergebnisse (dein bestehender Code)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
             ) {
-                when (searchState) {
+                when (val currentState = searchState) {
                     is SearchUiState.Loading -> {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator()
+                            Text("Lade Ergebnisse...", modifier = Modifier.padding(top = 60.dp))
+                        }
                     }
                     is SearchUiState.Success -> {
-                        val results = (searchState as SearchUiState.Success).results
-                        SearchResultsList(results = results) { clickedMedium ->
-                            val mediaType = clickedMedium.displayMediaType
-                            val mediaId = clickedMedium.id
-                            Log.d("HomeNavigation", "Navigating with ID: $mediaId, Type: ${mediaType.name}")
-                            navController.navigate("mediaDetail/${mediaId}/${mediaType.name}")
+                        if (currentState.results.isEmpty()) {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text("Keine Ergebnisse für deine Suche gefunden.")
+                            }
+                        } else {
+                            SearchResultsList(results = currentState.results) { clickedMedium ->
+                                navController.navigate("mediaDetail/${clickedMedium.id}/${clickedMedium.displayMediaType.name}")
+                            }
                         }
                     }
                     is SearchUiState.Error -> {
-                        Text(
-                            text = "Fehler: ${(searchState as SearchUiState.Error).message}",
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .padding(16.dp)
-                        )
+                        Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                            Text(text = "Fehler: ${currentState.message}", color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
+                        }
                     }
-                    SearchUiState.Idle -> Unit
+                    SearchUiState.Idle -> {
+                        Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
+                            Text(text = "Bitte gib einen Suchbegriff ein und wähle einen Typ.", textAlign = TextAlign.Center)
+                        }
+                    }
                 }
             }
         }
