@@ -52,7 +52,7 @@ sealed interface UserMediaListUiState {
 
 
 class ProfileScreenViewModel(
-    private val mediaRepository: MediaRepository = MediaRepository(ApiClient.mediaApi)
+    private val mediaRepository: MediaRepository
 ) : ViewModel() {
 
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
@@ -83,6 +83,7 @@ class ProfileScreenViewModel(
     }
 
     private fun observeFinishedMediaGlobalIds() {
+        Log.d("ProfileScreenVM_Auth", "CurrentUser UID: ${auth.currentUser?.uid}, Email: ${auth.currentUser?.email}")
         val currentUser = auth.currentUser
         if (currentUser == null) {
             _finishedMediaGlobalIds.value = emptySet()
@@ -136,81 +137,127 @@ class ProfileScreenViewModel(
     }
 
     // parseGlobalIdToComponents bleibt gleich, stelle sicher, dass es mit deinem globalID-Format übereinstimmt
+    // In deinem ProfileScreenViewModel.kt
+
     fun parseGlobalIdToComponents(globalID: String): ParsedGlobalId? {
+        Log.d("ProfileScreenVM_Parse", "Parse-Attempt: globalID = '$globalID'") // LOG 1
         val parts = globalID.split("_")
-        // Erwartet 3 Teile: "PROVIDER_TYP_ID" z.B. "TMDB_MOVIE_123"
         if (parts.size == 3) {
             try {
                 val apiProvider = parts[0]
-                val typeString = parts[1]
+                val typeString = parts[1].uppercase() // Wichtig für zuverlässigen when-Vergleich
                 val originalId = parts[2].toInt()
 
-                val mediaType = when (typeString.uppercase()) {
-                    MediumType.MOVIE.name -> MediumType.MOVIE // Verwende .name für Enum-Vergleich
+                val mediaType = when (typeString) {
+                    MediumType.MOVIE.name -> MediumType.MOVIE
                     MediumType.SERIES.name -> MediumType.SERIES
                     MediumType.BOOK.name -> MediumType.BOOK
                     MediumType.GAME.name -> MediumType.GAME
                     else -> {
-                        Log.w("ProfileScreenVM", "Unbekannter Typ-String '$typeString' in globalID '$globalID'")
+                        Log.w("ProfileScreenVM_Parse", "Parse-FAIL: Unknown typeString '$typeString' in globalID '$globalID'") // LOG 2
                         return null
                     }
                 }
-                return ParsedGlobalId(apiProvider, mediaType, originalId)
+                val parsed = ParsedGlobalId(apiProvider, mediaType, originalId)
+                Log.i("ProfileScreenVM_Parse", "Parse-SUCCESS: '$globalID' -> $parsed") // LOG 3
+                return parsed
             } catch (e: NumberFormatException) {
-                Log.e("ProfileScreenVM", "Fehler beim Parsen der ID in '$globalID'", e)
+                Log.e("ProfileScreenVM_Parse", "Parse-FAIL: Error parsing originalId from '$globalID'", e) // LOG 4
                 return null
             } catch (e: Exception) {
-                Log.e("ProfileScreenVM", "Allgemeiner Fehler beim Parsen von '$globalID'", e)
+                Log.e("ProfileScreenVM_Parse", "Parse-FAIL: General error parsing '$globalID'", e) // LOG 5
                 return null
             }
         } else {
-            Log.w("ProfileScreenVM", "Ungültiges Format für globalID '$globalID'. Erwartet 3 Teile (PROVIDER_TYP_ID).")
+            Log.w("ProfileScreenVM_Parse", "Parse-FAIL: Invalid format for globalID '$globalID'. Expected 3 parts, found ${parts.size}.") // LOG 6
+            return null
         }
-        return null
     }
 
+    // In deinem ProfileScreenViewModel.kt
+
     private fun fetchUserMedia(globalIdsFromUserDoc: List<String>) {
+        Log.i("ProfileScreenVM_Fetch", "fetchUserMedia CALLED with ${globalIdsFromUserDoc.size} globalIDs: $globalIdsFromUserDoc") // LOG A
+
         if (globalIdsFromUserDoc.isEmpty()) {
             _userMediaListState.value = UserMediaListUiState.NoMediaFound
+            Log.i("ProfileScreenVM_Fetch", "No globalIDs to fetch, setting NoMediaFound state.") // LOG B
             return
         }
         _userMediaListState.value = UserMediaListUiState.Loading
+        Log.d("ProfileScreenVM_Fetch", "Set UserMediaListUiState to Loading.") // LOG C
 
         viewModelScope.launch {
             try {
                 val currentFinishedIds = _finishedMediaGlobalIds.value
+                Log.d("ProfileScreenVM_Fetch", "Current finished IDs count: ${currentFinishedIds.size}") // LOG D
 
                 val deferredMediaItems = globalIdsFromUserDoc.mapNotNull { globalIdString ->
-                    parseGlobalIdToComponents(globalIdString)?.let { parsedId ->
+                    Log.d("ProfileScreenVM_Fetch", "Processing globalID: '$globalIdString'") // LOG E
+                    val parsedId = parseGlobalIdToComponents(globalIdString) // Nutzt die erweiterte Logging-Funktion
+
+                    if (parsedId == null) {
+                        Log.w("ProfileScreenVM_Fetch", "Skipping globalID '$globalIdString' due to parsing failure (parsedId is null).") // LOG F
+                        null // mapNotNull wird dies herausfiltern
+                    } else {
+                        Log.d("ProfileScreenVM_Fetch", "Successfully parsed '$globalIdString' to $parsedId. Starting async fetch for details.") // LOG G
                         async {
                             try {
+                                Log.d("ProfileScreenVM_Fetch", "Async fetch START for Type: ${parsedId.mediaType}, OriginalID: ${parsedId.originalId}") // LOG H
                                 val medium: Medium? = when (parsedId.mediaType) {
-                                    MediumType.MOVIE -> mediaRepository.getMovieDetails(parsedId.originalId)
-                                    MediumType.SERIES -> mediaRepository.getSeriesDetails(parsedId.originalId)
-                                    MediumType.BOOK -> null // Implementiere, falls benötigt
-                                    MediumType.GAME -> null  // Implementiere, falls benötigt
+                                    MediumType.MOVIE -> {
+                                        Log.d("ProfileScreenVM_Fetch", "Fetching MOVIE details for ID ${parsedId.originalId}")
+                                        mediaRepository.getMovieDetails(parsedId.originalId)
+                                    }
+                                    MediumType.SERIES -> {
+                                        Log.d("ProfileScreenVM_Fetch", "Fetching SERIES details for ID ${parsedId.originalId}")
+                                        mediaRepository.getSeriesDetails(parsedId.originalId)
+                                    }
+                                    MediumType.BOOK -> {
+                                        Log.w("ProfileScreenVM_Fetch", "BOOK type encountered for ID ${parsedId.originalId}, returning null.")
+                                        null
+                                    }
+                                    MediumType.GAME -> {
+                                        Log.d("ProfileScreenVM_Fetch", "Fetching GAME details for ID ${parsedId.originalId}")
+                                        mediaRepository.getGameDetails(parsedId.originalId)
+                                    }
+                                    MediumType.UNKNOWN -> {
+                                        Log.w("ProfileScreenVM_Fetch", "UNKNOWN media type for ID ${parsedId.originalId}, returning null.")
+                                        null
+                                    }
                                 }
+                                val resultTitle = medium?.title ?: "null (fetch failed or no title)"
+                                Log.i("ProfileScreenVM_Fetch", "Async fetch END for Type: ${parsedId.mediaType}, OriginalID: ${parsedId.originalId}. Result: '$resultTitle'") // LOG I
+
                                 medium?.apply {
-                                    // Stelle sicher, dass 'isFinished' in deiner Medium-Definition existiert und var ist
-                                    isFinished = currentFinishedIds.contains(this.globalID) // Verwende this.globalID
+                                    val isMarkedFinished = currentFinishedIds.contains(this.globalID)
+                                    Log.d("ProfileScreenVM_Fetch", "Applying finished state for '${this.globalID}': $isMarkedFinished (currentFinishedIds: $currentFinishedIds)")
+                                    isFinished = isMarkedFinished
                                 }
                             } catch (e: Exception) {
-                                Log.e("ProfileScreenVM","Details für ${parsedId.mediaType} ID ${parsedId.originalId}: ${e.message}")
+                                // DIESER LOG IST EXTREM WICHTIG, WENN LOG I "null" ZEIGT
+                                Log.e("ProfileScreenVM_Fetch", "Async fetch EXCEPTION for Type: ${parsedId.mediaType}, OriginalID: ${parsedId.originalId}: ${e.message}", e) // LOG J
                                 null
                             }
                         }
                     }
                 }
+                Log.d("ProfileScreenVM_Fetch", "Created ${deferredMediaItems.size} deferred tasks. Awaiting all...") // LOG K
                 val fetchedMediaItems = deferredMediaItems.awaitAll().filterNotNull()
+                Log.i("ProfileScreenVM_Fetch", "Finished awaiting. Fetched ${fetchedMediaItems.size} non-null media items.") // LOG L
 
                 if (fetchedMediaItems.isEmpty() && globalIdsFromUserDoc.isNotEmpty()) {
+                    Log.w("ProfileScreenVM_Fetch", "All detail fetches failed. Setting UserMediaListUiState to Error 'Konnte keine Mediendetails laden.'") // LOG M
                     _userMediaListState.value = UserMediaListUiState.Error("Konnte keine Mediendetails laden.")
                 } else if (fetchedMediaItems.isEmpty()) {
+                    Log.i("ProfileScreenVM_Fetch", "No media items fetched and globalIdsFromUserDoc was empty. Setting NoMediaFound.") // LOG N
                     _userMediaListState.value = UserMediaListUiState.NoMediaFound
                 } else {
+                    Log.i("ProfileScreenVM_Fetch", "Successfully fetched ${fetchedMediaItems.size} media items. Setting Success state.") // LOG O
                     _userMediaListState.value = UserMediaListUiState.Success(fetchedMediaItems)
                 }
-            } catch (e: Exception) {
+            } catch (e: Exception) { // Äußerer try-catch
+                Log.e("ProfileScreenVM_Fetch", "Outer EXCEPTION in fetchUserMedia: ${e.message}", e) // LOG P
                 _userMediaListState.value = UserMediaListUiState.Error("Laden der Medienliste: ${e.message}")
             }
         }

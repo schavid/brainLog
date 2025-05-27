@@ -102,7 +102,7 @@ fun Home(navController: NavController) {
                     is SearchUiState.Success -> {
                         val results = (searchState as SearchUiState.Success).results
                         SearchResultsList(results = results) { clickedMedium ->
-                            val mediaType = clickedMedium.type
+                            val mediaType = clickedMedium.displayMediaType
                             val mediaId = clickedMedium.id
                             Log.d("HomeNavigation", "Navigating with ID: $mediaId, Type: ${mediaType.name}")
                             navController.navigate("mediaDetail/${mediaId}/${mediaType.name}")

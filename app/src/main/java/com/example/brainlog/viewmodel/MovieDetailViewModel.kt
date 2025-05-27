@@ -15,6 +15,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import com.example.brainlog.model.RawgApiClient
+
 
 
 
@@ -35,7 +37,7 @@ sealed class UpdateUserMediaListUiState {
 }
 
 class MovieDetailViewModel(
-    private val repository: MediaRepository = MediaRepository(ApiClient.mediaApi),
+    private val repository: MediaRepository, // KEIN Standardwert mehr hier! Wird von der Factory übergeben.
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore
 ) : ViewModel() {
@@ -51,37 +53,33 @@ class MovieDetailViewModel(
         viewModelScope.launch {
             _uiState.value = MediaDetailUiState.Loading
             try {
-                when (type) {
+                val mediumDetails: Medium = when (type) {
                     MediumType.MOVIE -> {
-                        // Filme: Rufe die Details vom Film-Repository ab
-                        val movieDetails = repository.getMovieDetails(mediaId) // Aufruf für Filme
-                        _uiState.value = MediaDetailUiState.Success(movieDetails)
+                        repository.getMovieDetails(mediaId)
                     }
-
                     MediumType.SERIES -> {
-                        // Serien: Rufe die Details vom Serien-Repository ab
-                        val seriesDetails =
-                            repository.getSeriesDetails(mediaId) // Aufruf für Serien
-                        _uiState.value = MediaDetailUiState.Success(seriesDetails)
+                        repository.getSeriesDetails(mediaId)
                     }
-
-                    MediumType.BOOK -> {
-                        // Beispiel für zukünftige Erweiterung (Bücher, etc.)
-                        TODO("Implementiere die Logik für Bücher")
+                    MediumType.GAME -> { // Hier die Implementierung
+                        repository.getGameDetails(mediaId) // Ruft die neue Repository-Methode auf
                     }
-
-                    MediumType.GAME -> {
-                        // Beispiel für zukünftige Erweiterung (Spiele, etc.)
-                        TODO("Implementiere die Logik für Spiele")
+                    MediumType.BOOK -> { // Bleibt als TODO, falls du es später implementieren möchtest
+                        Log.w("MovieDetailVM", "Book type not yet implemented")
+                        throw NotImplementedError("Book details not implemented.")
+                    }
+                    MediumType.UNKNOWN -> { // Optional: Fallback für unbekannte Typen
+                        Log.e("MovieDetailVM", "Unknown medium type: $type for ID: $mediaId")
+                        throw IllegalArgumentException("Unknown medium type for detail view.")
                     }
                 }
-            }catch (e: Exception) {
+                _uiState.value = MediaDetailUiState.Success(mediumDetails)
+
+            } catch (e: Exception) {
                 Log.e("MovieDetailVM", "Error loading details for $mediaId ($type)", e)
-                _uiState.value = MediaDetailUiState.Error(e.message ?: "Unknown error")
+                _uiState.value = MediaDetailUiState.Error(e.message ?: "Unbekannter Fehler beim Laden der Details.")
             }
         }
     }
-
     fun addMediumToUser(medium: Medium) {
         val currentUser: FirebaseUser? = auth.currentUser
 
@@ -152,6 +150,7 @@ class MovieDetailViewModel(
     }
 }
 
+
 class MovieDetailViewModelFactory(
     private val auth: FirebaseAuth,
     private val db: FirebaseFirestore
@@ -160,7 +159,17 @@ class MovieDetailViewModelFactory(
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(MovieDetailViewModel::class.java)) {
-            return MovieDetailViewModel(auth = auth, db = db) as T
+            // Erstelle hier das MediaRepository mit beiden API-Services
+            val mediaRepository = MediaRepository(
+                tmdbApi = ApiClient.mediaApi,     // Dein TMDB-Service
+                rawgApi = RawgApiClient.rawgApi   // Dein RAWG-Service
+            )
+            // Übergebe das initialisierte Repository an das ViewModel
+            return MovieDetailViewModel(
+                repository = mediaRepository,
+                auth = auth,
+                db = db
+            ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }

@@ -1,6 +1,8 @@
 package com.example.brainlog.viewmodel.dto
 
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 data class TvShowDto(
     val adult: Boolean,
     val backdrop_path: String?,
@@ -35,7 +37,7 @@ data class TvShowDto(
     val vote_average: Double,
     val vote_count: Int
 )
-
+@JsonClass(generateAdapter = true)
 data class CreatedBy(
     val id: Int,
     val credit_id: String,
@@ -45,7 +47,7 @@ data class CreatedBy(
     val profile_path: String?
 )
 
-
+@JsonClass(generateAdapter = true)
 data class Episode(
     val id: Int,
     val name: String,
@@ -61,7 +63,7 @@ data class Episode(
     val show_id: Int,
     val still_path: String?
 )
-
+@JsonClass(generateAdapter = true)
 data class Network(
     val id: Int,
     val name: String,
@@ -69,7 +71,7 @@ data class Network(
     val origin_country: String
 )
 
-
+@JsonClass(generateAdapter = true)
 data class Season(
     val air_date: String?,
     val episode_count: Int,

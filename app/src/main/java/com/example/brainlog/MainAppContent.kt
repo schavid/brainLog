@@ -49,11 +49,18 @@ fun MainAppContent(
                 val mediaID = backStackEntry.arguments?.getString("mediaId")?.toIntOrNull()
                 val mediaType = backStackEntry.arguments?.getString("mediaType")?.let { MediumType.valueOf(it) }
                 Log.d("MediaDetailNav", "Received raw ID: $mediaID, raw Type: $mediaType")
-                // Falls movieId oder mediaType null sind, handle diesen Fall
+
                 if (mediaID != null && mediaType != null) {
-                    MediaDetailScreen(movieId = mediaID, mediaType = mediaType)
+                    MediaDetailScreen(
+                        movieId = mediaID,
+                        mediaType = mediaType,
+                        navController = navController // <<<< DIESEN PARAMETER HINZUFÜGEN
+                    )
                 }  else {
-                    Log.e("MediaDetailNav", "Failed to parse arguments. Cannot show MediaDetailScreen. Parsed ID: $mediaID, Parsed Type: $mediaType") // <<< ERWEITERTES LOG
+                    Log.e(
+                        "MediaDetailNav",
+                        "Failed to parse arguments. Cannot show MediaDetailScreen. Parsed ID: $mediaID, Parsed Type: $mediaType"
+                    )
                 }
             }
         }

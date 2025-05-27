@@ -3,8 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
+    id("com.google.devtools.ksp")
 }
-
 android {
     namespace = "com.example.brainlog"
     compileSdk = 35
@@ -77,5 +77,6 @@ dependencies {
     implementation("androidx.compose.material:material-icons-core:1.6.7") // Or your Compose version
     implementation("androidx.compose.material:material-icons-extended:1.6.7")
     implementation ("com.google.android.gms:play-services-auth:20.7.0")
-
+    implementation("com.squareup.moshi:moshi-kotlin:1.15.0") // Oder die neueste Version
+    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.1")    // Aktuellste stabile Version verwenden
 }

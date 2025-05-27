@@ -57,3 +57,25 @@ data class Series(
     override val globalID: String = "${apiProvider}_${type}_${id}",
 ) : Medium
 
+data class Game(
+    // Felder aus dem Medium-Interface
+    override val globalID: String,
+    override val id: Int,
+    override val apiProvider: String,
+    override val title: String,
+    override val description: String,
+    override val genres: List<String>,
+    override val releaseDate: String,
+    override val type: MediumType, // Wird auf MediumType.GAME gesetzt
+    override var isFinished: Boolean = false,
+
+    // Spiel-spezifische Felder
+    val posterUrl: String?,
+    val website: String?,
+    val metacriticScore: Int?,
+    val esrbRatingName: String?,
+    val developers: List<String>,
+    val publishers: List<String>,
+    val playtime: Int?
+) : Medium
+

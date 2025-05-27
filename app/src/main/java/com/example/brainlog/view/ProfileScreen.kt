@@ -68,15 +68,19 @@ import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.brainlog.model.Game
+import com.example.brainlog.viewmodel.ProfileScreenViewModelFactory
 
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ProfileScreen(
-    userProfileViewModel: ProfileScreenViewModel = viewModel(),
+    // userProfileViewModel: ProfileScreenViewModel = viewModel(), // ALTE Zeile
+    userProfileViewModel: ProfileScreenViewModel = viewModel(factory = ProfileScreenViewModelFactory()), // NEUE Zeile mit Factory
     onNavigateToLogin: () -> Unit,
     onNavigateToMediaDetail: (id: Int, type: MediumType) -> Unit
 ) {
+
     val uiState by userProfileViewModel.uiState.collectAsStateWithLifecycle()
     val userMediaListState by userProfileViewModel.userMediaListState.collectAsStateWithLifecycle()
 
@@ -274,26 +278,20 @@ fun ProfileHeader(
     }
 }
 
-
-
-
-
-
-
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun MediaListItem(medium: Medium,
-                  onClick: () -> Unit,
-                  isSelected: Boolean,
-                  isInSelectionMode: Boolean,
-                  onLongClick: () -> Unit
+fun MediaListItem(
+    medium: Medium,
+    onClick: () -> Unit,
+    isSelected: Boolean,
+    isInSelectionMode: Boolean,
+    onLongClick: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .size(100.dp, 150.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(Color(0x505B231D))
+            .background(Color(0x505B231D)) // Du kannst hier auch MaterialTheme.colorScheme.surfaceVariant verwenden
             .then(
                 if (isSelected && isInSelectionMode) {
                     Modifier.border(
@@ -311,49 +309,60 @@ fun MediaListItem(medium: Medium,
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 8.dp, vertical = 8.dp), // Einheitliches Padding
+                .padding(horizontal = 8.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween // Um Text unten zu halten
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            val posterUrl = when (medium) {
+            // Ermittle den Poster-Pfad oder die vollständige URL basierend auf dem Typ
+            val rawPosterPathOrUrl: String? = when (medium) {
                 is Movie -> medium.posterUrl
                 is Series -> medium.posterUrl
-                else -> null
+                is Game -> medium.posterUrl // Dies ist die volle URL vom Game-Domänenmodell
+                else -> null // Sollte nicht eintreten, wenn alle Medium-Typen abgedeckt sind
             }
 
             Box( // Box für das Bild und Overlays
                 modifier = Modifier
-                    .weight(1f) // Nimmt den meisten Platz
+                    .weight(1f)
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp)) // Innere Ecken für das Bild
+                    .clip(RoundedCornerShape(12.dp))
             ) {
-                posterUrl?.let { path ->
-                    val imageUrl = "https://image.tmdb.org/t/p/w500$path"
+                if (rawPosterPathOrUrl != null) {
+                    // Erstelle die imageUrl korrekt:
+                    // RAWG liefert volle URLs, TMDB relative Pfade.
+                    val finalImageUrl = if (medium.apiProvider == "RAWG" || rawPosterPathOrUrl.startsWith("http")) {
+                        rawPosterPathOrUrl // Ist bereits eine volle URL (z.B. von RAWG)
+                    } else {
+                        "https://image.tmdb.org/t/p/w500$rawPosterPathOrUrl" // TMDB-Pfad
+                    }
+
                     Image(
                         painter = rememberAsyncImagePainter(
-                            model = imageUrl,
-                            error = painterResource(id = R.drawable.ic_placeholder_image), // Platzhalter bei Fehler
-                            placeholder = painterResource(id = R.drawable.ic_placeholder_image) // Platzhalter beim Laden
+                            model = finalImageUrl,
+                            error = painterResource(id = R.drawable.ic_placeholder_image),
+                            placeholder = painterResource(id = R.drawable.ic_placeholder_image)
                         ),
                         contentDescription = medium.title,
                         modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop, // Crop, um die Box zu füllen
+                        contentScale = ContentScale.Crop,
                     )
-                } ?: Box( // Fallback, wenn kein Poster-URL vorhanden ist
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_placeholder_image),
-                        contentDescription = "Kein Bild verfügbar",
-                        modifier = Modifier.size(40.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                } else { // Fallback, wenn kein Poster-URL vorhanden ist
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_placeholder_image),
+                            contentDescription = "Kein Bild verfügbar",
+                            modifier = Modifier.size(40.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
-                // Auswahlindikator
+                // Auswahlindikator (dein bestehender Code ist hier gut)
                 if (isInSelectionMode) {
                     Icon(
                         imageVector = if (isSelected) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
@@ -367,14 +376,14 @@ fun MediaListItem(medium: Medium,
                             .padding(2.dp)
                     )
                 }
-                // "Fertig" Indikator (nur wenn nicht im Auswahlmodus, um Überlappung zu vermeiden)
+                // "Fertig" Indikator (dein bestehender Code ist hier gut)
                 else if (medium.isFinished) {
                     Icon(
-                        imageVector = Icons.Filled.Visibility, // Oder ein anderes passendes Icon
-                        contentDescription = "Fertig angesehen",
+                        imageVector = Icons.Filled.Visibility,
+                        contentDescription = "Fertig angesehen/gespielt",
                         tint = Color.White.copy(alpha = 0.9f),
                         modifier = Modifier
-                            .align(Alignment.BottomStart) // Andere Ecke
+                            .align(Alignment.BottomStart)
                             .padding(6.dp)
                             .size(20.dp)
                             .background(Color.Black.copy(alpha = 0.4f), CircleShape)
@@ -383,15 +392,14 @@ fun MediaListItem(medium: Medium,
                 }
             }
 
-
-
+            // Titel (dein bestehender Code ist hier gut)
             Text(
                 text = medium.title,
-                style = AppTextStyles.normal.copy(fontSize = 13.sp), // Kleinere Schrift für bessere Passform
+                style = AppTextStyles.normal.copy(fontSize = 13.sp),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                modifier = Modifier.padding(top = 4.dp) // Etwas Abstand zum Bild
+                modifier = Modifier.padding(top = 4.dp)
             )
         }
     }

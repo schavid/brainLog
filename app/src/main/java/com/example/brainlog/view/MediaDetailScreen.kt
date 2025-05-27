@@ -1,6 +1,7 @@
 package com.example.brainlog.view
 
 
+import android.util.Log // Importiere Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack // Für Zurück-Pfeil
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -26,8 +28,10 @@ import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton // Für Zurück-Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost // Für Snackbar
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -44,6 +48,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext // Für Toast/Snackbar Kontext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -55,8 +60,10 @@ import com.example.brainlog.model.MediumType
 import com.example.brainlog.viewmodel.MediaDetailUiState
 import com.example.brainlog.model.Movie
 import com.example.brainlog.model.Series
+import com.example.brainlog.model.Game // Importiere Game
 import kotlinx.coroutines.launch
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController // Importiere NavController
 import com.example.brainlog.viewmodel.MovieDetailViewModelFactory
 import com.example.brainlog.viewmodel.UpdateUserMediaListUiState
 import com.google.firebase.auth.ktx.auth
@@ -67,287 +74,231 @@ import com.google.firebase.ktx.Firebase
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MediaDetailScreen(
-    movieId: Int,
+    movieId: Int, // Beachte: dieser Parameter heißt movieId, im LaunchedEffect verwendest du mediaId. Vereinheitliche das.
     mediaType: MediumType,
+    navController: NavController // Hinzugefügt, um Zurück-Navigation zu ermöglichen
 ) {
 
     val firebaseAuth = remember { Firebase.auth }
     val firebaseFirestore = remember { Firebase.firestore }
-    val movieDetailViewModelFactory = remember {
+    val movieDetailViewModelFactory = remember(firebaseAuth, firebaseFirestore) { // Keys für remember
         MovieDetailViewModelFactory(auth = firebaseAuth, db = firebaseFirestore)
     }
     val viewModel: MovieDetailViewModel = viewModel(factory = movieDetailViewModelFactory)
     val uiState by viewModel.uiState.collectAsState()
-    val updatedUserMediaList by viewModel.updateUserMediaListUiState.collectAsState() // State für Hinzufüge-Aktion
+    val updatedUserMediaList by viewModel.updateUserMediaListUiState.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current // Für Toasts oder andere Kontext-abhängige Aktionen
 
+    // Lade Details, wenn sich movieId oder mediaType ändern
+    LaunchedEffect(movieId, mediaType) {
+        viewModel.loadMovieDetail(movieId, mediaType)
+    }
 
     LaunchedEffect(updatedUserMediaList) {
         when (val state = updatedUserMediaList) {
             is UpdateUserMediaListUiState.AddSuccess -> {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Medium erfolgreich hinzugefügt!")
-                }
-                viewModel.resetUpdateUserMediaListState() // State zurücksetzen, um wiederholte Nachrichten zu vermeiden
+                scope.launch { snackbarHostState.showSnackbar("Medium erfolgreich hinzugefügt!") }
+                viewModel.resetUpdateUserMediaListState()
+            }
+            is UpdateUserMediaListUiState.DeleteSuccess -> { // Für später, falls du Löschen implementierst
+                scope.launch { snackbarHostState.showSnackbar("Medium erfolgreich entfernt!") }
+                viewModel.resetUpdateUserMediaListState()
             }
             is UpdateUserMediaListUiState.Error -> {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Fehler: ${state.message}")
-                }
+                scope.launch { snackbarHostState.showSnackbar("Fehler: ${state.message}") }
                 viewModel.resetUpdateUserMediaListState()
             }
             is UpdateUserMediaListUiState.UserNotLoggedIn -> {
-                scope.launch {
-                    snackbarHostState.showSnackbar("Bitte zuerst anmelden.")
-                }
+                scope.launch { snackbarHostState.showSnackbar("Bitte zuerst anmelden.") }
                 viewModel.resetUpdateUserMediaListState()
             }
-            else -> Unit
+            else -> Unit // Idle, Loading
         }
     }
 
-
-
     Scaffold(
-        modifier = Modifier
-            .fillMaxSize(),
-
+        modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
                 title = {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "BrainLog",
-                            textAlign = TextAlign.Center,
-                            color = White
-                        )
+                    val titleText = (uiState as? MediaDetailUiState.Success)?.medium?.title ?: "Details"
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) { // Geändert zu CenterStart für Platz für Zurück-Button
+                        Text(text = titleText, textAlign = TextAlign.Center, color = White, maxLines = 1)
                     }
                 },
-
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent
-                )
+                navigationIcon = { // Zurück-Button
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Zurück", tint = White)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
         floatingActionButton = {
-            // Zeige den FAB nur an, wenn die Daten erfolgreich geladen wurden
             if (uiState is MediaDetailUiState.Success) {
                 val medium = (uiState as MediaDetailUiState.Success).medium
                 FloatingActionButton(
-                    onClick = {
-                        // Rufe die ViewModel-Funktion auf, um das Medium hinzuzufügen
-                        viewModel.addMediumToUser(medium)
-                    },
+                    onClick = { viewModel.addMediumToUser(medium) },
                     shape = CircleShape,
-                    containerColor = Color(0xFF490D0D),
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    elevation = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = 8.dp, // Schatten im Normalzustand
-                        pressedElevation = 12.dp, // Schatten, wenn gedrückt
-                        focusedElevation = 10.dp, // Schatten, wenn fokussiert
-                        hoveredElevation = 10.dp
-                    )
-
+                    containerColor = Color(0xFF490D0D), // Deine Farbe
+                    contentColor = White, // Farbe für das Icon
+                    elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 8.dp)
                 ) {
-                    // Ändere das Icon vielleicht zu einem "Add"-Icon
-                    Icon(
-                        imageVector = Icons.Filled.Add, // z.B. "Add" statt "Edit"
-                        contentDescription = "Medium hinzufügen"
-                    )
+                    Icon(imageVector = Icons.Filled.Add, contentDescription = "Medium hinzufügen")
                 }
             }
         },
         floatingActionButtonPosition = FabPosition.End,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }, // SnackbarHost hinzugefügt
         containerColor = Color.Transparent
     ) { innerPadding ->
-        LaunchedEffect(Unit) {
-            viewModel.loadMovieDetail(movieId, mediaType)
-        }
-
         Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-
-            when (uiState) {
-                is MediaDetailUiState.Loading,
-                is MediaDetailUiState.Idle -> {
+            when (val state = uiState) { // uiState einmal entpacken
+                is MediaDetailUiState.Loading, MediaDetailUiState.Idle -> {
                     CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
                 }
-
-
                 is MediaDetailUiState.Success -> {
-                    val medium = (uiState as MediaDetailUiState.Success).medium
-
+                    val medium = state.medium // medium ist hier vom Typ Medium
                     Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                            .padding(horizontal = 16.dp)
+                            .fillMaxSize() // Geändert zu fillMaxSize, um Scrollen der gesamten Spalte zu ermöglichen
                             .verticalScroll(rememberScrollState())
-                            .background(Color(0x505B231D), RoundedCornerShape(20.dp))
-                            .padding(16.dp)
+                            .padding(horizontal = 16.dp) // Padding für die gesamte Spalte
                     ) {
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(10.dp)) // Abstand von TopAppBar
 
-                        Text(
-                            text = medium.title,
-                            textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 24.sp,
-                            fontFamily = FontFamily.Serif,
-                            color = White,
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        val posterUrl = when (medium) {
+                        // --- Poster/Bild ---
+                        val rawPosterPathOrUrl: String? = when (medium) {
                             is Movie -> medium.posterUrl
                             is Series -> medium.posterUrl
+                            is Game -> medium.posterUrl // Game hat jetzt posterUrl
                             else -> null
                         }
 
-                        posterUrl?.let { path ->
-                            val imageUrl = "https://image.tmdb.org/t/p/w500$path"
+                        if (rawPosterPathOrUrl != null) {
+                            val finalImageUrl = if (medium.apiProvider == "RAWG" || rawPosterPathOrUrl.startsWith("http", ignoreCase = true)) {
+                                rawPosterPathOrUrl
+                            } else {
+                                "https://image.tmdb.org/t/p/w780$rawPosterPathOrUrl" // w780 für größere Detailbilder
+                            }
                             Image(
-                                painter = rememberAsyncImagePainter(imageUrl),
+                                painter = rememberAsyncImagePainter(model = finalImageUrl),
                                 contentDescription = medium.title,
                                 modifier = Modifier
-                                    .width(80.dp)
-                                    .height(120.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .align(Alignment.CenterHorizontally),
-                                contentScale = ContentScale.Crop,
+                                    .fillMaxWidth()
+                                    .height(250.dp) // Höhe angepasst
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant), // Hintergrund für den Ladefall
+                                contentScale = ContentScale.Crop
                             )
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Row(
-                            modifier = Modifier.padding(16.dp)
-                                .fillMaxWidth(),
-                            verticalAlignment = Alignment.Top
-                        ) {
-                            Column(
+                        } else {
+                            Box(
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .padding(end = 16.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween // gleichmäßige Verteilung
-                                ) {
-                                    // Release Date
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(
-                                            text = "Release Date",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 14.sp,
-                                            color = White
-                                        )
-                                        Text(
-                                            text = medium.releaseDate,
-                                            fontSize = 12.sp,
-                                            color = White
-                                        )
-                                    }
-
-                                    // Genre
-                                    Column(
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                        modifier = Modifier.width(120.dp)
-                                    ) {
-                                        Text(
-                                            text = "Genre",
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 14.sp,
-                                            color = White
-                                        )
-                                        Text(
-                                            text = medium.genres.joinToString(),
-                                            fontSize = 12.sp,
-                                            color = White,
-
-                                            )
-                                    }
-
-                                    // Runtime
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
-                                        when (medium) {
-
-                                            is Movie -> {
-                                                Text(
-                                                    text = "Runtime",
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 14.sp,
-                                                    color = White
-                                                )
-                                                Text(
-                                                    text = "${medium.runtime} min",
-                                                    fontSize = 12.sp,
-                                                    color = White
-                                                )
-                                            }
-
-                                            is Series -> {
-                                                Text(
-                                                    text = "Seasons",
-                                                    fontWeight = FontWeight.Bold,
-                                                    fontSize = 14.sp,
-                                                    color = White
-                                                )
-                                                Text(
-                                                    text = "${medium.numberOfSeasons}",
-                                                    fontSize = 12.sp,
-                                                    color = White
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-
-                            }
-
+                                    .fillMaxWidth()
+                                    .height(250.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center
+                            ) { Text("Kein Bild verfügbar", color = MaterialTheme.colorScheme.onSurfaceVariant) }
                         }
+
                         Spacer(modifier = Modifier.height(16.dp))
 
+                        // Box mit Hintergrund für Textdetails
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0x505B231D), RoundedCornerShape(20.dp))
+                                .padding(16.dp)
+                        ) {
+                            Text(
+                                text = medium.title,
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 24.sp,
+                                fontFamily = FontFamily.Serif,
+                                color = White,
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
 
-                        Text(
-                            "Description:",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = White
-                        )
+                            // Release, Genre, Spezifische Infos
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceAround // Bessere Verteilung
+                            ) {
+                                DetailInfoColumn("Release", medium.releaseDate)
+                                DetailInfoColumn("Genre(s)", medium.genres.take(2).joinToString(", ")) // Zeige max 2 Genres
 
-                        Text(
-                            text = medium.description,
-                            textAlign = TextAlign.Justify,
-                            fontSize = 12.sp,
-                            color = White
-                        )
+                                // Typ-spezifische Info (Runtime, Seasons, Metacritic)
+                                when (medium) {
+                                    is Movie -> DetailInfoColumn("Laufzeit", "${medium.runtime ?: "N/A"} Min.")
+                                    is Series -> DetailInfoColumn("Staffeln", "${medium.numberOfSeasons ?: "N/A"}")
+                                    is Game -> DetailInfoColumn("Metacritic", "${medium.metacriticScore ?: "N/A"}")
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(16.dp))
 
+                            // Weitere Spiel-spezifische Details (falls es ein Spiel ist)
+                            if (medium is Game) {
+                                if (medium.developers.isNotEmpty()) DetailInfoGrid("Entwickler:", medium.developers.joinToString(", "))
+                                if (medium.publishers.isNotEmpty()) DetailInfoGrid("Publisher:", medium.publishers.joinToString(", "))
+                                medium.esrbRatingName?.let { DetailInfoGrid("ESRB:", it) }
+                                medium.website?.let { if (it.isNotBlank()) DetailInfoGrid("Webseite:", it) } // TODO: Klickbar machen
+                                medium.playtime?.let { if (it > 0) DetailInfoGrid("Spielzeit (Std.):", it.toString()) }
+                            }
+                            // TODO: Füge hier ähnliche Blöcke für Movie- und Series-spezifische Details ein, falls gewünscht
+
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text("Beschreibung:", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = White)
+                            Text(text = medium.description, textAlign = TextAlign.Justify, fontSize = 12.sp, color = White)
+                        }
+                        Spacer(modifier = Modifier.height(80.dp)) // Platz für den FAB
                     }
                 }
-
                 is MediaDetailUiState.Error -> {
-                    val errorMsg = (uiState as MediaDetailUiState.Error).message
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) { // Zentrieren in neuer Box
+                    // Dein bestehender Error-Handler
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
-                            text = "Error: $errorMsg",
+                            text = "Error: ${state.message}",
                             color = Color.Red,
-                            modifier = Modifier.background(
-                                White.copy(alpha = 0.8f),
-                                RoundedCornerShape(8.dp)
-                            ).padding(16.dp)
+                            modifier = Modifier
+                                .background(White.copy(alpha = 0.8f), RoundedCornerShape(8.dp))
+                                .padding(16.dp)
                         )
                     }
                 }
             }
+        }
+    }
+}
+
+// Hilfs-Composable für Detail-Spalten
+@Composable
+fun DetailInfoColumn(label: String, value: String) {
+    if (value.isNotBlank() && value.lowercase() != "n/a" && value.lowercase() != "unbekannt") {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 4.dp)) {
+            Text(text = label, fontWeight = FontWeight.Bold, fontSize = 14.sp, color = White, textAlign = TextAlign.Center)
+            Text(text = value, fontSize = 12.sp, color = White, textAlign = TextAlign.Center, maxLines = 3)
+        }
+    }
+}
+
+// Hilfs-Composable für Grid-ähnliche Detail-Zeilen
+@Composable
+fun DetailInfoGrid(label: String, value: String) {
+    if (value.isNotBlank() && value.lowercase() != "n/a" && value.lowercase() != "unbekannt") {
+        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+            Text(
+                text = "$label ",
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = White
+            )
+            Text(text = value, style = MaterialTheme.typography.bodyMedium, color = White)
         }
     }
 }
