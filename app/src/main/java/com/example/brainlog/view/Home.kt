@@ -127,7 +127,7 @@ fun Home(navController: NavController) {
                     }
                     SearchUiState.Idle -> {
                         Box(modifier = Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                            Text(text = "Bitte gib einen Suchbegriff ein und wähle einen Typ.", textAlign = TextAlign.Center)
+                            Text(text = "Heiße Ladyboys", textAlign = TextAlign.Center)
                         }
                     }
                 }
