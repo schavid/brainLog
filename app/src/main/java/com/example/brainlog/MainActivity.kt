@@ -30,7 +30,7 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent {
-            BrainLogTheme {
+            BrainLogTheme{
                 val backgroundImagePainter = painterResource(id = R.drawable.background)
 
 

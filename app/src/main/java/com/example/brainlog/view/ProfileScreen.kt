@@ -1,41 +1,37 @@
 package com.example.brainlog.view
 
-
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,58 +39,34 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import com.example.brainlog.R
+import com.example.brainlog.model.Game
 import com.example.brainlog.model.Medium
 import com.example.brainlog.model.MediumType
 import com.example.brainlog.model.Movie
 import com.example.brainlog.model.Series
 import com.example.brainlog.ui.theme.AppTextStyles
 import com.example.brainlog.viewmodel.ProfileScreenViewModel
+import com.example.brainlog.viewmodel.ProfileScreenViewModelFactory
 import com.example.brainlog.viewmodel.UserMediaListUiState
 import com.example.brainlog.viewmodel.UserProfileUiState
-import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material.icons.filled.DoneAll
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.text.style.TextOverflow
-import com.example.brainlog.model.Game
-import com.example.brainlog.viewmodel.ProfileScreenViewModelFactory
-
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    // userProfileViewModel: ProfileScreenViewModel = viewModel(), // ALTE Zeile
-    userProfileViewModel: ProfileScreenViewModel = viewModel(factory = ProfileScreenViewModelFactory()), // NEUE Zeile mit Factory
+    userProfileViewModel: ProfileScreenViewModel = viewModel(factory = ProfileScreenViewModelFactory()),
     onNavigateToLogin: () -> Unit,
     onNavigateToMediaDetail: (id: Int, type: MediumType) -> Unit,
+    scrollBehavior: TopAppBarScrollBehavior,
     onSetTopAppBar: ((@Composable () -> Unit)?) -> Unit
 ) {
 
     val uiState by userProfileViewModel.uiState.collectAsStateWithLifecycle()
     val userMediaListState by userProfileViewModel.userMediaListState.collectAsStateWithLifecycle()
-
     val selectedMediaGlobalIds by userProfileViewModel.selectedMediaGlobalIds.collectAsStateWithLifecycle()
     val isInSelectionMode by userProfileViewModel.isInSelectionMode.collectAsStateWithLifecycle()
 
-    // NEU: DisposableEffect, der die TopAppBar im Parent steuert
-    DisposableEffect(isInSelectionMode, selectedMediaGlobalIds.size) {
+    DisposableEffect(uiState, isInSelectionMode, selectedMediaGlobalIds.size) {
         if (isInSelectionMode) {
-            // Setze die TopAppBar für den Auswahlmodus
             onSetTopAppBar {
                 SelectionModeTopAppBar(
                     selectedCount = selectedMediaGlobalIds.size,
@@ -103,33 +75,67 @@ fun ProfileScreen(
                     onMarkAsFinishedSelected = { userProfileViewModel.toggleFinishedStateForSelected() }
                 )
             }
-        } else {
-            // Setze die Standard-TopAppBar für das Profil
+        } else if (uiState is UserProfileUiState.Success) {
+            val user = (uiState as UserProfileUiState.Success).userDocument
+            val photoUrl = user.photoUrl
+            val username = user.username
+
             onSetTopAppBar {
-                if (uiState is UserProfileUiState.Success) {
-                    // Wir nutzen eine transparente TopAppBar als intelligenten Container
-                    TopAppBar(
-                        // Wir platzieren den ProfileHeader im title-Slot,
-                        // damit er den verfügbaren Platz einnimmt.
-                        title = {
-                            ProfileHeader(
-                                username = (uiState as UserProfileUiState.Success).userDocument.username,
-                                photoUrl = (uiState as UserProfileUiState.Success).userDocument.photoUrl,
-                                onLogoutClick = {
-                                    onNavigateToLogin()
-                                }
+                MediumTopAppBar(
+                    title = {
+                        // Der große, aufgeklappte Header (wird ausgeblendet).
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Start
+
+                        ) {
+                            // Die Logik vom alten ProfileHeader ist jetzt hier drin.
+                            AsyncImage(
+                                model = photoUrl,
+                                contentDescription = "Profilbild von $username",
+                                modifier = Modifier
+                                    .size(30.dp)
+                                    .clip(CircleShape),
+                                contentScale = ContentScale.Crop,
+                                placeholder = painterResource(R.drawable.ic_placeholder_profile),
+                                error = painterResource(R.drawable.ic_placeholder_profile)
                             )
-                        },
-                        // Wichtig: Mache den Container der TopAppBar transparent
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color.Transparent
-                        )
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            Text(
+                                text = username,
+                                style = AppTextStyles.HugeHeader
+                            )
+
+
+                        }
+                    },
+                    actions = {
+                        ElevatedButton(
+                            onClick = onNavigateToLogin,
+                            modifier = Modifier.size(40.dp),
+                            colors = ButtonDefaults.elevatedButtonColors(
+                                containerColor = Color(0xFFD32F2F),
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                contentDescription = "Logout",
+                                tint = Color.White
+                            )
+                        }
+                    },
+                    scrollBehavior = scrollBehavior,
+                    colors = TopAppBarDefaults.mediumTopAppBarColors(
+                        containerColor = Color.Transparent,
+                        scrolledContainerColor = Color(0xFF5B231D)
                     )
-                }
+                )
             }
         }
-
-        // Wird aufgerufen, wenn der Screen verlassen wird -> räumt die TopAppBar auf
         onDispose {
             onSetTopAppBar(null)
         }
@@ -142,39 +148,28 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 8.dp)
-            .padding(16.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-
-
-
-
-
-        Spacer(modifier = Modifier.height(if (isInSelectionMode) 8.dp else 20.dp))
-
-        when (uiState) { // Variable für Smart Cast
-
+        when (val currentState = uiState) {
             is UserProfileUiState.Loading -> {
-                CircularProgressIndicator()
-                Text("Loading Profile...")
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
             }
-
             is UserProfileUiState.Success -> {
-                val user = (uiState as UserProfileUiState.Success).userDocument
-
+                Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "${user.username}'s Watchlist",
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    style = AppTextStyles.CustomHeader
+                    text = "Watchlist",
+                    modifier = Modifier.fillMaxWidth(),
+                    style = AppTextStyles.CustomHeader,
+                    textAlign = TextAlign.Start
                 )
-
+                Spacer(modifier = Modifier.height(16.dp))
                 when (val mediaState = userMediaListState) {
-                    is UserMediaListUiState.Loading -> {
-                        CircularProgressIndicator()
-                        Text("Lade Medien...") }
-
+                    is UserMediaListUiState.Loading -> CircularProgressIndicator()
                     is UserMediaListUiState.Success -> {
                         if (mediaState.mediaItems.isEmpty()) {
                             Text("Du hast noch keine Medien zu deiner Watchlist hinzugefügt.")
@@ -184,7 +179,7 @@ fun ProfileScreen(
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                mediaState.mediaItems.forEach{ medium ->
+                                mediaState.mediaItems.forEach { medium ->
                                     MediaListItem(
                                         medium = medium,
                                         isSelected = selectedMediaGlobalIds.contains(medium.globalID),
@@ -204,103 +199,21 @@ fun ProfileScreen(
                             }
                         }
                     }
-
-                    is UserMediaListUiState.Error -> {
-                        Text("Fehler beim Laden der Medien: ${mediaState.message}")
-                    }
-
-                    is UserMediaListUiState.NoMediaFound -> {
-                        Text("Keine Medien in deiner Watchlist gefunden.")
-                    }
-
+                    is UserMediaListUiState.Error -> Text("Fehler beim Laden der Medien: ${mediaState.message}")
+                    is UserMediaListUiState.NoMediaFound -> Text("Keine Medien in deiner Watchlist gefunden.")
                     is UserMediaListUiState.Idle -> Unit
                 }
             }
-
-            is UserProfileUiState.Error -> {
-                Text("Fehler: ${(uiState as UserProfileUiState.Error).message}")
-                Button(onClick = { userProfileViewModel.fetchUserProfileThenMedia() }) {
-                    Text("Erneut versuchen")
-                }
-            }
-
-            is UserProfileUiState.NotLoggedIn -> {
-                Text("Du bist nicht angemeldet.")
-                Button(onClick = onNavigateToLogin) {
-                    Text("Zum Login")
-                }
-            }
-
-            is UserProfileUiState.ProfileNotFound -> {
-                Text("Profil nicht gefunden.")
-                Button(onClick = { userProfileViewModel.fetchUserProfileThenMedia() }) {
-                    Text("Erneut versuchen")
-                }
-            }
-        }
-    }
-
-
-}
-
-@Composable
-fun ProfileHeader(
-    username: String,
-    photoUrl: String?,
-    onLogoutClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(top = 16.dp),
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.End,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (photoUrl != null) {
-                AsyncImage(
-                    model = photoUrl,
-                    contentDescription = "Profilbild von $username",
-                    modifier = Modifier
-                        .size(50.dp)
-                        .clip(CircleShape),
-                    contentScale = ContentScale.Crop,
-                    placeholder = painterResource(R.drawable.ic_placeholder_profile),
-                    error = painterResource(R.drawable.ic_placeholder_profile)
-                )
-            } else {
-                Image(
-                    painter = painterResource(R.drawable.ic_placeholder_profile),
-                    contentDescription = "Profilbild von $username",
-                    modifier = Modifier
-                        .size(50.dp)
-                        .clip(CircleShape),
-                )
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Button(
-                modifier = Modifier
-                    .padding(4.dp)
-                    .height(34.dp),
-                onClick = onLogoutClick,
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-            ) {
-
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                    contentDescription = "Logout",
-                    tint = Color.White,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+            is UserProfileUiState.Error -> Text("Fehler: ${currentState.message}")
+            is UserProfileUiState.NotLoggedIn -> Text("Du bist nicht angemeldet.")
+            is UserProfileUiState.ProfileNotFound -> Text("Profil nicht gefunden.")
         }
     }
 }
+
+
+// Die `ProfileHeader`-Funktion wurde gelöscht.
+
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -337,7 +250,6 @@ fun MediaListItem(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Ermittle den Poster-Pfad oder die vollständige URL basierend auf dem Typ
             val rawPosterPathOrUrl: String? = when (medium) {
                 is Movie -> medium.posterUrl
                 is Series -> medium.posterUrl
@@ -352,8 +264,6 @@ fun MediaListItem(
                     .clip(RoundedCornerShape(12.dp))
             ) {
                 if (rawPosterPathOrUrl != null) {
-                    // Erstelle die imageUrl korrekt:
-                    // RAWG liefert volle URLs, TMDB relative Pfade.
                     val finalImageUrl = if (medium.apiProvider == "RAWG" || rawPosterPathOrUrl.startsWith("http")) {
                         rawPosterPathOrUrl // Ist bereits eine volle URL (z.B. von RAWG)
                     } else {
@@ -386,7 +296,6 @@ fun MediaListItem(
                     }
                 }
 
-                // Auswahlindikator (dein bestehender Code ist hier gut)
                 if (isInSelectionMode) {
                     Icon(
                         imageVector = if (isSelected) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
@@ -400,7 +309,6 @@ fun MediaListItem(
                             .padding(2.dp)
                     )
                 }
-                // "Fertig" Indikator (dein bestehender Code ist hier gut)
                 else if (medium.isFinished) {
                     Icon(
                         imageVector = Icons.Filled.Visibility,
@@ -416,13 +324,12 @@ fun MediaListItem(
                 }
             }
 
-            // Titel (dein bestehender Code ist hier gut)
             Text(
                 text = medium.title,
                 style = AppTextStyles.normal.copy(fontSize = 13.sp),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
@@ -430,7 +337,7 @@ fun MediaListItem(
 }
 
 // TopAppBar für den Auswahlmodus
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectionModeTopAppBar(
     selectedCount: Int,
@@ -446,7 +353,6 @@ fun SelectionModeTopAppBar(
             }
         },
         actions = {
-            // Ein TextButton, der Icon und Text enthält
             TextButton(
                 onClick = onMarkAsFinishedSelected,
                 modifier = Modifier.padding(horizontal = 8.dp)
@@ -456,7 +362,7 @@ fun SelectionModeTopAppBar(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.Visibility, // Intuitiveres Icon
+                        imageVector = Icons.Filled.Visibility,
                         contentDescription = "Als gesehen markieren"
                     )
                     Text("Gesehen")
@@ -480,7 +386,7 @@ fun SelectionModeTopAppBar(
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer, // Passende Farbe
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
             titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer

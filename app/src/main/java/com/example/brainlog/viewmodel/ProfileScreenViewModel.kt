@@ -359,9 +359,6 @@ class ProfileScreenViewModel(
                 val userDocRef = db.collection("users").document(currentUser.uid)
                 val currentFinishedIds = _finishedMediaGlobalIds.value
 
-                // 1. Teile die ausgewählten Medien in zwei Gruppen auf:
-                //    - Die, die bereits "fertig" sind (müssen entfernt werden)
-                //    - Die, die noch nicht "fertig" sind (müssen hinzugefügt werden)
                 val (alreadyFinished, notYetFinished) = mediaObjectsToToggle.partition {
                     currentFinishedIds.contains(it.globalID)
                 }

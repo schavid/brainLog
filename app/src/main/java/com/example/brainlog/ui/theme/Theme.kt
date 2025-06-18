@@ -24,6 +24,13 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 object AppTextStyles { // Ein object, um sie zu gruppieren
+    val HugeHeader = TextStyle(
+        fontSize = 35.sp,
+        fontFamily = FontFamily.Serif,
+        fontWeight = FontWeight.Bold,
+        color = Color.White
+    )
+
     val CustomHeader = TextStyle(
         fontSize = 25.sp,
         fontFamily = FontFamily.Serif,
@@ -45,7 +52,9 @@ object AppTextStyles { // Ein object, um sie zu gruppieren
 private val LightColorScheme = lightColorScheme(
     primary = Purple40,
     secondary = PurpleGrey40,
-    tertiary = Pink40
+    tertiary = Pink40,
+    errorContainer = Color(0xFFF9DEDC),      // Ein helles, rötliches Rosa als Hintergrund
+    onErrorContainer = Color(0xFF410E0B)
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
