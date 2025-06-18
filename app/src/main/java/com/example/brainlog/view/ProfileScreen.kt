@@ -68,6 +68,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.brainlog.model.Game
@@ -99,7 +100,7 @@ fun ProfileScreen(
                     selectedCount = selectedMediaGlobalIds.size,
                     onCloseSelectionMode = { userProfileViewModel.clearSelection() },
                     onDeleteSelected = { userProfileViewModel.deleteSelectedMedia() },
-                    onMarkAsFinishedSelected = { userProfileViewModel.markSelectedAsFinished() }
+                    onMarkAsFinishedSelected = { userProfileViewModel.toggleFinishedStateForSelected() }
                 )
             }
         } else {
@@ -445,17 +446,37 @@ fun SelectionModeTopAppBar(
             }
         },
         actions = {
-            Column {
-                Text("mark as watched", fontSize = 5.sp)
-                IconButton(onClick = onMarkAsFinishedSelected) {
-                    Icon(Icons.Filled.DoneAll, contentDescription = "Als fertig markieren")
+            // Ein TextButton, der Icon und Text enthält
+            TextButton(
+                onClick = onMarkAsFinishedSelected,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Visibility, // Intuitiveres Icon
+                        contentDescription = "Als gesehen markieren"
+                    )
+                    Text("Gesehen")
                 }
-
             }
 
-
-            IconButton(onClick = onDeleteSelected) {
-                Icon(Icons.Filled.Delete, contentDescription = "Ausgewählte löschen")
+            TextButton(
+                onClick = onDeleteSelected,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Delete,
+                        contentDescription = "Ausgewählte löschen"
+                    )
+                    Text("Löschen")
+                }
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(

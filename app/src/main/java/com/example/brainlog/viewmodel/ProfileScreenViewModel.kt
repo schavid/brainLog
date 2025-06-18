@@ -340,46 +340,57 @@ class ProfileScreenViewModel(
     // da wir jetzt mit Medium-Objekten arbeiten, die ihre globalID haben.
     // Behalte sie, falls du sie an anderer Stelle noch brauchst, ansonsten kann sie weg.
 
-    fun markSelectedAsFinished() {
-        val mediaObjectsToMark = getCurrentlySelectedMediaObjects()
-        if (mediaObjectsToMark.isEmpty()) {
+    fun toggleFinishedStateForSelected() {
+        val mediaObjectsToToggle = getCurrentlySelectedMediaObjects()
+        if (mediaObjectsToToggle.isEmpty()) {
             clearSelection()
             return
         }
 
         val currentUser = auth.currentUser
         if (currentUser == null) {
-            Log.w("ProfileScreenVM", "User not logged in for mark as finished operation.")
+            Log.w("ProfileScreenVM", "User not logged in for toggle operation.")
             clearSelection()
             return
         }
 
-        // _userMediaListState.value = UserMediaListUiState.Loading // Optional: UI Feedback
-        val originalStateBeforeLoading = userMediaListState.value // Für Fehlerfall
-
         viewModelScope.launch {
-            val userDocRef = db.collection("users").document(currentUser.uid)
-
-            // globalIDs von den Objekten nehmen
-            val globalIdsForFirestore = mediaObjectsToMark.map { it.globalID }
-
-
             try {
-                // Name des Feldes: "finishedMediasGlobalIds"
-                userDocRef.update("finishedMediasGlobalIds", FieldValue.arrayUnion(*globalIdsForFirestore.toTypedArray()))
-                    .await()
+                val userDocRef = db.collection("users").document(currentUser.uid)
+                val currentFinishedIds = _finishedMediaGlobalIds.value
 
-                // Die _finishedMediaGlobalIds werden durch den Listener aktualisiert.
-                // Damit die Medium-Objekte in der UI ihr isFinished-Flag aktualisieren,
-                // müssen wir die Medienliste neu laden.
+                // 1. Teile die ausgewählten Medien in zwei Gruppen auf:
+                //    - Die, die bereits "fertig" sind (müssen entfernt werden)
+                //    - Die, die noch nicht "fertig" sind (müssen hinzugefügt werden)
+                val (alreadyFinished, notYetFinished) = mediaObjectsToToggle.partition {
+                    currentFinishedIds.contains(it.globalID)
+                }
+
+                // Hole die reinen IDs für die Firestore-Operation
+                val idsToMarkAsUnfinished = alreadyFinished.map { it.globalID }
+                val idsToMarkAsFinished = notYetFinished.map { it.globalID }
+
+                // 2. Verwende einen WriteBatch für atomare Operationen
+                val batch = db.batch()
+
+                // Füge die Operation zum ENTFERNEN zum Batch hinzu (falls nötig)
+                if (idsToMarkAsUnfinished.isNotEmpty()) {
+                    batch.update(userDocRef, "finishedMediasGlobalIds", FieldValue.arrayRemove(*idsToMarkAsUnfinished.toTypedArray()))
+                }
+
+                // Füge die Operation zum HINZUFÜGEN zum Batch hinzu (falls nötig)
+                if (idsToMarkAsFinished.isNotEmpty()) {
+                    batch.update(userDocRef, "finishedMediasGlobalIds", FieldValue.arrayUnion(*idsToMarkAsFinished.toTypedArray()))
+                }
+
+                // 3. Führe den Batch aus
+                batch.commit().await()
+
                 fetchUserMedia((_uiState.value as? UserProfileUiState.Success)?.userDocument?.addedMedias ?: emptyList())
 
             } catch (e: Exception) {
-                Log.e("ProfileScreenVM", "Error marking media as finished", e)
-                if (_userMediaListState.value is UserMediaListUiState.Loading && _userMediaListState.value != originalStateBeforeLoading) { // Nur wenn wir es explizit auf Loading gesetzt haben
-                    _userMediaListState.value = originalStateBeforeLoading
-                }
-                // Optional: spezifischen Fehler an UI melden
+                Log.e("ProfileScreenVM", "Error toggling finished state", e)
+                // Optional: Fehler an die UI melden
             } finally {
                 clearSelection()
             }
