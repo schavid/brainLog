@@ -11,7 +11,7 @@ data class Movie(
     var firestoreId: String? = null,
 
 
-    override val apiProvider: String = "TMDB",
+    override val apiProvider: String,
     override val id: Int = 0,
     override val title: String = "",
     override val description: String = "",
@@ -35,7 +35,7 @@ data class Series(
     @DocumentId
     var firestoreId: String? = null,
 
-    override val apiProvider: String = "TMDB",
+    override val apiProvider: String,
     override val id: Int = 0,
     override val title: String = "",
     override val description: String = "",

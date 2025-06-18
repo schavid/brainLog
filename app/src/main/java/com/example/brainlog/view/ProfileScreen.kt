@@ -56,6 +56,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -67,18 +68,20 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.brainlog.model.Game
 import com.example.brainlog.viewmodel.ProfileScreenViewModelFactory
 
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
     // userProfileViewModel: ProfileScreenViewModel = viewModel(), // ALTE Zeile
     userProfileViewModel: ProfileScreenViewModel = viewModel(factory = ProfileScreenViewModelFactory()), // NEUE Zeile mit Factory
     onNavigateToLogin: () -> Unit,
-    onNavigateToMediaDetail: (id: Int, type: MediumType) -> Unit
+    onNavigateToMediaDetail: (id: Int, type: MediumType) -> Unit,
+    onSetTopAppBar: ((@Composable () -> Unit)?) -> Unit
 ) {
 
     val uiState by userProfileViewModel.uiState.collectAsStateWithLifecycle()
@@ -87,137 +90,156 @@ fun ProfileScreen(
     val selectedMediaGlobalIds by userProfileViewModel.selectedMediaGlobalIds.collectAsStateWithLifecycle()
     val isInSelectionMode by userProfileViewModel.isInSelectionMode.collectAsStateWithLifecycle()
 
-    BackHandler(enabled = isInSelectionMode) {
-        userProfileViewModel.clearSelection()
-    }
-
-    Scaffold(
-        containerColor = Color.Transparent,
-        topBar = {
-            if (isInSelectionMode) {
+    // NEU: DisposableEffect, der die TopAppBar im Parent steuert
+    DisposableEffect(isInSelectionMode, selectedMediaGlobalIds.size) {
+        if (isInSelectionMode) {
+            // Setze die TopAppBar für den Auswahlmodus
+            onSetTopAppBar {
                 SelectionModeTopAppBar(
                     selectedCount = selectedMediaGlobalIds.size,
                     onCloseSelectionMode = { userProfileViewModel.clearSelection() },
                     onDeleteSelected = { userProfileViewModel.deleteSelectedMedia() },
                     onMarkAsFinishedSelected = { userProfileViewModel.markSelectedAsFinished() }
                 )
-            } else {
-
+            }
+        } else {
+            // Setze die Standard-TopAppBar für das Profil
+            onSetTopAppBar {
+                if (uiState is UserProfileUiState.Success) {
+                    // Wir nutzen eine transparente TopAppBar als intelligenten Container
+                    TopAppBar(
+                        // Wir platzieren den ProfileHeader im title-Slot,
+                        // damit er den verfügbaren Platz einnimmt.
+                        title = {
+                            ProfileHeader(
+                                username = (uiState as UserProfileUiState.Success).userDocument.username,
+                                photoUrl = (uiState as UserProfileUiState.Success).userDocument.photoUrl,
+                                onLogoutClick = {
+                                    onNavigateToLogin()
+                                }
+                            )
+                        },
+                        // Wichtig: Mache den Container der TopAppBar transparent
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent
+                        )
+                    )
+                }
             }
         }
-    ) { paddingValues ->
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        // Wird aufgerufen, wenn der Screen verlassen wird -> räumt die TopAppBar auf
+        onDispose {
+            onSetTopAppBar(null)
+        }
+    }
+
+    BackHandler(enabled = isInSelectionMode) {
+        userProfileViewModel.clearSelection()
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 8.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
 
 
-            if (!isInSelectionMode && uiState is UserProfileUiState.Success) {
-                val user = (uiState as UserProfileUiState.Success).userDocument
-                ProfileHeader(
-                    username = user.username,
-                    photoUrl = user.photoUrl,
-                    onLogoutClick = {
-                        onNavigateToLogin()
-                    }
-                )
+
+
+
+        Spacer(modifier = Modifier.height(if (isInSelectionMode) 8.dp else 20.dp))
+
+        when (uiState) { // Variable für Smart Cast
+
+            is UserProfileUiState.Loading -> {
+                CircularProgressIndicator()
+                Text("Loading Profile...")
             }
 
+            is UserProfileUiState.Success -> {
+                val user = (uiState as UserProfileUiState.Success).userDocument
 
-            Spacer(modifier = Modifier.height(if (isInSelectionMode) 8.dp else 20.dp))
+                Text(
+                    text = "${user.username}'s Watchlist",
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    style = AppTextStyles.CustomHeader
+                )
 
-            when (uiState) { // Variable für Smart Cast
+                when (val mediaState = userMediaListState) {
+                    is UserMediaListUiState.Loading -> {
+                        CircularProgressIndicator()
+                        Text("Lade Medien...") }
 
-                is UserProfileUiState.Loading -> {
-                    CircularProgressIndicator()
-                    Text("Loading Profile...")
-                }
-
-                is UserProfileUiState.Success -> {
-                    val user = (uiState as UserProfileUiState.Success).userDocument
-
-                    Text(
-                        text = "${user.username}'s Watchlist",
-                        modifier = Modifier.align(Alignment.CenterHorizontally),
-                        style = AppTextStyles.CustomHeader
-                    )
-
-                    when (val mediaState = userMediaListState) {
-                        is UserMediaListUiState.Loading -> {
-                            CircularProgressIndicator()
-                            Text("Lade Medien...") }
-
-                        is UserMediaListUiState.Success -> {
-                            if (mediaState.mediaItems.isEmpty()) {
-                                Text("Du hast noch keine Medien zu deiner Watchlist hinzugefügt.")
-                            } else {
-                                FlowRow(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                                ) {
-                                    mediaState.mediaItems.forEach{ medium ->
-                                        MediaListItem(
-                                            medium = medium,
-                                            isSelected = selectedMediaGlobalIds.contains(medium.globalID),
-                                            isInSelectionMode = isInSelectionMode,
-                                            onClick = {
-                                                if (isInSelectionMode) {
-                                                    userProfileViewModel.toggleMediaSelection(medium)
-                                                } else {
-                                                    onNavigateToMediaDetail(medium.id, medium.type)
-                                                }
-                                            },
-                                            onLongClick = {
+                    is UserMediaListUiState.Success -> {
+                        if (mediaState.mediaItems.isEmpty()) {
+                            Text("Du hast noch keine Medien zu deiner Watchlist hinzugefügt.")
+                        } else {
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                mediaState.mediaItems.forEach{ medium ->
+                                    MediaListItem(
+                                        medium = medium,
+                                        isSelected = selectedMediaGlobalIds.contains(medium.globalID),
+                                        isInSelectionMode = isInSelectionMode,
+                                        onClick = {
+                                            if (isInSelectionMode) {
                                                 userProfileViewModel.toggleMediaSelection(medium)
+                                            } else {
+                                                onNavigateToMediaDetail(medium.id, medium.type)
                                             }
-                                        )
-                                    }
+                                        },
+                                        onLongClick = {
+                                            userProfileViewModel.toggleMediaSelection(medium)
+                                        }
+                                    )
                                 }
                             }
                         }
-
-                        is UserMediaListUiState.Error -> {
-                            Text("Fehler beim Laden der Medien: ${mediaState.message}")
-                        }
-
-                        is UserMediaListUiState.NoMediaFound -> {
-                            Text("Keine Medien in deiner Watchlist gefunden.")
-                        }
-
-                        is UserMediaListUiState.Idle -> Unit
                     }
+
+                    is UserMediaListUiState.Error -> {
+                        Text("Fehler beim Laden der Medien: ${mediaState.message}")
+                    }
+
+                    is UserMediaListUiState.NoMediaFound -> {
+                        Text("Keine Medien in deiner Watchlist gefunden.")
+                    }
+
+                    is UserMediaListUiState.Idle -> Unit
                 }
+            }
 
-                is UserProfileUiState.Error -> {
-                    Text("Fehler: ${(uiState as UserProfileUiState.Error).message}")
-                    Button(onClick = { userProfileViewModel.fetchUserProfileThenMedia() }) {
-                        Text("Erneut versuchen")
-                    }
+            is UserProfileUiState.Error -> {
+                Text("Fehler: ${(uiState as UserProfileUiState.Error).message}")
+                Button(onClick = { userProfileViewModel.fetchUserProfileThenMedia() }) {
+                    Text("Erneut versuchen")
                 }
+            }
 
-                is UserProfileUiState.NotLoggedIn -> {
-                    Text("Du bist nicht angemeldet.")
-                    Button(onClick = onNavigateToLogin) {
-                        Text("Zum Login")
-                    }
+            is UserProfileUiState.NotLoggedIn -> {
+                Text("Du bist nicht angemeldet.")
+                Button(onClick = onNavigateToLogin) {
+                    Text("Zum Login")
                 }
+            }
 
-                is UserProfileUiState.ProfileNotFound -> {
-                    Text("Profil nicht gefunden.")
-                    Button(onClick = { userProfileViewModel.fetchUserProfileThenMedia() }) {
-                        Text("Erneut versuchen")
-                    }
+            is UserProfileUiState.ProfileNotFound -> {
+                Text("Profil nicht gefunden.")
+                Button(onClick = { userProfileViewModel.fetchUserProfileThenMedia() }) {
+                    Text("Erneut versuchen")
                 }
             }
         }
-
     }
+
+
 }
 
 @Composable
@@ -227,7 +249,8 @@ fun ProfileHeader(
     onLogoutClick: () -> Unit
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
             .wrapContentHeight()
             .padding(top = 16.dp),
     ) {
@@ -422,10 +445,15 @@ fun SelectionModeTopAppBar(
             }
         },
         actions = {
-            IconButton(onClick = onMarkAsFinishedSelected) {
-                Icon(Icons.Filled.DoneAll, contentDescription = "Als fertig markieren")
-                Text("finished")// Passendes Icon
+            Column {
+                Text("mark as watched", fontSize = 5.sp)
+                IconButton(onClick = onMarkAsFinishedSelected) {
+                    Icon(Icons.Filled.DoneAll, contentDescription = "Als fertig markieren")
+                }
+
             }
+
+
             IconButton(onClick = onDeleteSelected) {
                 Icon(Icons.Filled.Delete, contentDescription = "Ausgewählte löschen")
             }

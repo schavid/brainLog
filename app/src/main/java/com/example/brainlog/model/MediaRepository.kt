@@ -1,8 +1,6 @@
 package com.example.brainlog.model // Oder dein passendes Package
 
 import android.util.Log
-import com.example.brainlog.viewmodel.dto.SearchMovieDto // Stelle sicher, dass der Import korrekt ist
-import com.example.brainlog.viewmodel.dto.SearchSeriesDto // Stelle sicher, dass der Import korrekt ist
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 
@@ -10,8 +8,8 @@ import kotlinx.coroutines.coroutineScope
 // RawgApiService ist dein neues Interface für RAWG
 
 class MediaRepository(
-    private val tmdbApi: MediaAPI,
-    private val rawgApi: RawgApiService
+    private val mediaApi: MediaAPI,
+    private val rawgApi: MediaAPI
 ) {
     // Die getGameDetails, getMovieDetails, getSeriesDetails Methoden bleiben wie sie sind...
     suspend fun getGameDetails(gameId: Int): Medium {
@@ -30,7 +28,7 @@ class MediaRepository(
     suspend fun getMovieDetails(movieId: Int): com.example.brainlog.model.Movie {
         Log.d("MediaRepo_Detail", "MOVIE_DETAIL: Fetching details for movieId: $movieId")
         try {
-            val movieDto = tmdbApi.getMovieDetails(movieId)
+            val movieDto = mediaApi.getMovieDetails(movieId)
             Log.i("MediaRepo_Detail", "MOVIE_DETAIL: DTO received for movieId $movieId. DTO Title: ${movieDto.title}")
             val domainModel = movieDto.getDetailsDomainModel()
             Log.i("MediaRepo_Detail", "MOVIE_DETAIL: Mapped to domain model for movieId $movieId. Domain Title: ${domainModel.title}, GlobalID: ${domainModel.globalID}")
@@ -44,7 +42,7 @@ class MediaRepository(
     suspend fun getSeriesDetails(seriesId: Int): com.example.brainlog.model.Series {
         Log.d("MediaRepo_Detail", "SERIES_DETAIL: Fetching details for seriesId: $seriesId")
         try {
-            val seriesDto = tmdbApi.getSeriesDetails(seriesId)
+            val seriesDto = mediaApi.getSeriesDetails(seriesId)
             Log.i("MediaRepo_Detail", "SERIES_DETAIL: DTO received for seriesId $seriesId. DTO Name: ${seriesDto.name}")
             val domainModel = seriesDto.getDetailsDomainModel()
             Log.i("MediaRepo_Detail", "SERIES_DETAIL: Mapped to domain model for seriesId $seriesId. Domain Title: ${domainModel.title}, GlobalID: ${domainModel.globalID}")
@@ -109,7 +107,7 @@ class MediaRepository(
     private suspend fun searchTmdbMovies(query: String): List<SearchMedium.Movie> {
         Log.d("MediaRepository", "searchTmdbMovies: Searching movies for '$query'")
         try {
-            val response = tmdbApi.searchFilms(query)
+            val response = mediaApi.searchFilms(query)
             val movies = response.results.map { dto ->
                 SearchMedium.Movie(
                     tmdbId = dto.id,
@@ -129,7 +127,7 @@ class MediaRepository(
     private suspend fun searchTmdbSeries(query: String): List<SearchMedium.Series> {
         Log.d("MediaRepository", "searchTmdbSeries: Searching series for '$query'")
         try {
-            val response = tmdbApi.searchSeries(query)
+            val response = mediaApi.searchSeries(query)
             val series = response.results.map { dto ->
                 SearchMedium.Series(
                     tmdbId = dto.id,

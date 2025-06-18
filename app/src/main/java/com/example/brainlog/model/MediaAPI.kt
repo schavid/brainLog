@@ -31,4 +31,14 @@ interface MediaAPI {
     ): TvShowDto
 
 
+    @GET("games")
+    suspend fun searchGames(
+        @Query("search") query: String,
+        @Query("page_size") pageSize: Int = 10
+    ): RawgSearchResponse // Bestehende Methode
+
+    @GET("games/{id}") // {id} wird durch den @Path Parameter ersetzt
+    suspend fun getGameDetails(@Path("id") gameId: Int): RawgGameDetailDto // Neues Datenmodell
+
+
 }

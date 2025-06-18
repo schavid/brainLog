@@ -13,7 +13,7 @@ class ProfileScreenViewModelFactory : ViewModelProvider.Factory {
         if (modelClass.isAssignableFrom(ProfileScreenViewModel::class.java)) {
             // Erstelle hier das MediaRepository mit beiden API-Services
             val mediaRepository = MediaRepository(
-                tmdbApi = ApiClient.mediaApi,     // Dein TMDB-Service
+                mediaApi = ApiClient.mediaApi,     // Dein TMDB-Service
                 rawgApi = RawgApiClient.rawgApi   // Dein RAWG-Service
             )
             // Übergebe das initialisierte Repository an das ViewModel

@@ -13,7 +13,7 @@ import com.example.brainlog.model.MediumType
 
 class SearchViewModel(
     private val repository: MediaRepository = MediaRepository(
-        tmdbApi = ApiClient.mediaApi,
+        mediaApi = ApiClient.mediaApi,
         rawgApi = RawgApiClient.rawgApi
     )
 ) : ViewModel() {

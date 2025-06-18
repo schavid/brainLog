@@ -64,7 +64,7 @@ class ProfileScreenViewModel(
     private val _userMediaListState = MutableStateFlow<UserMediaListUiState>(UserMediaListUiState.Idle)
     val userMediaListState: StateFlow<UserMediaListUiState> = _userMediaListState.asStateFlow()
 
-    // NEU: Speichert die globalIDs der ausgewählten Medien
+    // Speichert die globalIDs der ausgewählten Medien
     private val _selectedMediaGlobalIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedMediaGlobalIds: StateFlow<Set<String>> = _selectedMediaGlobalIds.asStateFlow()
 
@@ -263,7 +263,7 @@ class ProfileScreenViewModel(
         }
     }
 
-    // NEU: toggleMediaSelection nimmt jetzt ein Medium-Objekt
+    // Ausgewähltes Medium_global id in eine liste
     fun toggleMediaSelection(medium: Medium) {
         val currentSelection = _selectedMediaGlobalIds.value.toMutableSet()
         // Verwende die globalID vom Medium-Objekt

@@ -35,18 +35,8 @@ object RawgApiClient {
         .client(client)
         .build()
 
-    val rawgApi: RawgApiService = retrofit.create(RawgApiService::class.java)
+    val rawgApi: MediaAPI = retrofit.create(MediaAPI::class.java)
 }
 
-interface RawgApiService {
-    @GET("games")
-    suspend fun searchGames(
-        @Query("search") query: String,
-        @Query("page_size") pageSize: Int = 10
-    ): RawgSearchResponse // Bestehende Methode
 
-    // NEUE METHODE:
-    @GET("games/{id}") // {id} wird durch den @Path Parameter ersetzt
-    suspend fun getGameDetails(@Path("id") gameId: Int): RawgGameDetailDto // Neues Datenmodell
-}
 
