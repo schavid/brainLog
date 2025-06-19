@@ -74,7 +74,7 @@ fun ProfileScreen(
     val selectedMediaGlobalIds by userProfileViewModel.selectedMediaGlobalIds.collectAsStateWithLifecycle()
     val isInSelectionMode by userProfileViewModel.isInSelectionMode.collectAsStateWithLifecycle()
     val currentFilter by userProfileViewModel.mediaFilter.collectAsStateWithLifecycle()
-    val windowColor = Color(0x505B231D)
+    val windowColor = Color(0xCC5B231D)
 
 
     DisposableEffect(uiState, isInSelectionMode, selectedMediaGlobalIds.size) {
@@ -131,7 +131,7 @@ fun ProfileScreen(
                     },
                     colors = TopAppBarDefaults.mediumTopAppBarColors(
                         containerColor = windowColor,
-                        scrolledContainerColor = windowColor.copy(alpha = 0.8f)
+                        scrolledContainerColor = windowColor.copy(alpha = 1f)
                     ),
                     actions = {
                         FilledIconButton(
