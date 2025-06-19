@@ -20,10 +20,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+
+// Enum für die Filteroptionen
+enum class MediaFilter {
+    UNFINISHED, FINISHED, ALL
+}
 
 // UserProfileUiState bleibt gleich
 sealed interface UserProfileUiState {
@@ -64,6 +70,10 @@ class ProfileScreenViewModel(
     private val _userMediaListState = MutableStateFlow<UserMediaListUiState>(UserMediaListUiState.Idle)
     val userMediaListState: StateFlow<UserMediaListUiState> = _userMediaListState.asStateFlow()
 
+    //State für den aktuellen Filter
+    private val _mediaFilter = MutableStateFlow(MediaFilter.UNFINISHED)
+    val mediaFilter: StateFlow<MediaFilter> = _mediaFilter.asStateFlow()
+
     // Speichert die globalIDs der ausgewählten Medien
     private val _selectedMediaGlobalIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedMediaGlobalIds: StateFlow<Set<String>> = _selectedMediaGlobalIds.asStateFlow()
@@ -77,9 +87,39 @@ class ProfileScreenViewModel(
         .map { it.isNotEmpty() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
+    // Abgeleiteter State, der die gefilterte Liste enthält
+    val filteredMediaListState: StateFlow<UserMediaListUiState> =
+        combine(_userMediaListState, _mediaFilter) { mediaState, filter ->
+            if (mediaState is UserMediaListUiState.Success) {
+                val filteredItems = when (filter) {
+                    MediaFilter.UNFINISHED -> mediaState.mediaItems.filter { !it.isFinished }
+                    MediaFilter.FINISHED -> mediaState.mediaItems.filter { it.isFinished }
+                    MediaFilter.ALL -> mediaState.mediaItems
+                }
+                // Wenn nach dem Filtern keine Items übrig sind, zeige NoMediaFound
+                if (filteredItems.isEmpty()) {
+                    UserMediaListUiState.NoMediaFound
+                } else {
+                    UserMediaListUiState.Success(filteredItems)
+                }
+            } else {
+                // Bei Loading, Error etc. den Zustand einfach durchreichen
+                mediaState
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = UserMediaListUiState.Idle
+        )
+
     init {
         observeFinishedMediaGlobalIds()
         fetchUserProfileThenMedia()
+    }
+
+    // Funktion zum Ändern des Filters
+    fun setMediaFilter(filter: MediaFilter) {
+        _mediaFilter.value = filter
     }
 
     private fun observeFinishedMediaGlobalIds() {

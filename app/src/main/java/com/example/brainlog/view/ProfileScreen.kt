@@ -13,9 +13,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.*
@@ -23,7 +25,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,6 +53,7 @@ import com.example.brainlog.model.MediumType
 import com.example.brainlog.model.Movie
 import com.example.brainlog.model.Series
 import com.example.brainlog.ui.theme.AppTextStyles
+import com.example.brainlog.viewmodel.MediaFilter
 import com.example.brainlog.viewmodel.ProfileScreenViewModel
 import com.example.brainlog.viewmodel.ProfileScreenViewModelFactory
 import com.example.brainlog.viewmodel.UserMediaListUiState
@@ -65,9 +70,10 @@ fun ProfileScreen(
 ) {
 
     val uiState by userProfileViewModel.uiState.collectAsStateWithLifecycle()
-    val userMediaListState by userProfileViewModel.userMediaListState.collectAsStateWithLifecycle()
+    val filteredMediaListState by userProfileViewModel.filteredMediaListState.collectAsStateWithLifecycle()
     val selectedMediaGlobalIds by userProfileViewModel.selectedMediaGlobalIds.collectAsStateWithLifecycle()
     val isInSelectionMode by userProfileViewModel.isInSelectionMode.collectAsStateWithLifecycle()
+    val currentFilter by userProfileViewModel.mediaFilter.collectAsStateWithLifecycle()
     val windowColor = Color(0x505B231D)
 
 
@@ -121,8 +127,6 @@ fun ProfileScreen(
                                 fontSize = topAppBarTextSize,
                                 color = Color.White
                             )
-
-
                         }
                     },
                     colors = TopAppBarDefaults.mediumTopAppBarColors(
@@ -175,14 +179,27 @@ fun ProfileScreen(
             }
             is UserProfileUiState.Success -> {
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = "Watchlist",
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    style = AppTextStyles.CustomHeader,
-                    textAlign = TextAlign.Start
-                )
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "Watchlist",
+                        style = AppTextStyles.CustomHeader,
+                        textAlign = TextAlign.Start
+                    )
+
+                    FilterDropDown(
+                        currentFilter = currentFilter,
+                        onFilterSelected = { newFilter ->
+                            userProfileViewModel.setMediaFilter(newFilter)
+                        }
+                    )
+                }
                 Spacer(modifier = Modifier.height(16.dp))
-                when (val mediaState = userMediaListState) {
+                when (val mediaState = filteredMediaListState) {
                     is UserMediaListUiState.Loading -> CircularProgressIndicator()
                     is UserMediaListUiState.Success -> {
                         if (mediaState.mediaItems.isEmpty()) {
@@ -214,7 +231,14 @@ fun ProfileScreen(
                         }
                     }
                     is UserMediaListUiState.Error -> Text("Fehler beim Laden der Medien: ${mediaState.message}")
-                    is UserMediaListUiState.NoMediaFound -> Text("Keine Medien in deiner Watchlist gefunden.")
+                    is UserMediaListUiState.NoMediaFound -> {
+                        val message = when (currentFilter) {
+                            MediaFilter.UNFINISHED -> "Du hast alle Medien gesehen! Gut gemacht!"
+                            MediaFilter.FINISHED -> "Du hast noch keine Medien als gesehen markiert."
+                            MediaFilter.ALL -> "Deine Watchlist ist leer."
+                        }
+                        Text(message)
+                    }
                     is UserMediaListUiState.Idle -> Unit
                 }
             }
@@ -226,7 +250,71 @@ fun ProfileScreen(
 }
 
 
-// Die `ProfileHeader`-Funktion wurde gelöscht.
+@Composable
+fun FilterDropDown(
+    currentFilter: MediaFilter,
+    onFilterSelected: (MediaFilter) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    Box {
+        FilledIconButton(
+        onClick = { expanded = true },
+        modifier = Modifier
+            .width(60.dp)
+            .height(30.dp),
+        shape = RoundedCornerShape(6.dp), // Deine gewünschte Form mit abgerundeten Ecken
+        colors = IconButtonDefaults.filledIconButtonColors(
+            containerColor = Color.White,
+            contentColor = Color.Black
+        )
+    ) {
+        Icon(Icons.Default.FilterList,
+            contentDescription = "Filter")
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            DropdownMenuItem(
+                text = { Text("Unfinished") },
+                onClick = {
+                    onFilterSelected(MediaFilter.UNFINISHED)
+                    expanded = false
+                },
+                leadingIcon = {
+                    if (currentFilter == MediaFilter.UNFINISHED) {
+                        Icon(Icons.Default.Check, contentDescription = "Aktueller Filter")
+                    }
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Finished") },
+                onClick = {
+                    onFilterSelected(MediaFilter.FINISHED)
+                    expanded = false
+                },
+                leadingIcon = {
+                    if (currentFilter == MediaFilter.FINISHED) {
+                        Icon(Icons.Default.Check, contentDescription = "Aktueller Filter")
+                    }
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("All") },
+                onClick = {
+                    onFilterSelected(MediaFilter.ALL)
+                    expanded = false
+                },
+                leadingIcon = {
+                    if (currentFilter == MediaFilter.ALL) {
+                        Icon(Icons.Default.Check, contentDescription = "Aktueller Filter")
+                    }
+                }
+            )
+        }
+    }
+}
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -298,7 +386,10 @@ fun MediaListItem(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp)),
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant,
+                                RoundedCornerShape(12.dp)
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
