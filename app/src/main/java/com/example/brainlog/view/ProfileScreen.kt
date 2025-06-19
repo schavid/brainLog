@@ -21,14 +21,18 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,6 +68,8 @@ fun ProfileScreen(
     val userMediaListState by userProfileViewModel.userMediaListState.collectAsStateWithLifecycle()
     val selectedMediaGlobalIds by userProfileViewModel.selectedMediaGlobalIds.collectAsStateWithLifecycle()
     val isInSelectionMode by userProfileViewModel.isInSelectionMode.collectAsStateWithLifecycle()
+    val windowColor = Color(0x505B231D)
+
 
     DisposableEffect(uiState, isInSelectionMode, selectedMediaGlobalIds.size) {
         if (isInSelectionMode) {
@@ -80,7 +86,13 @@ fun ProfileScreen(
             val photoUrl = user.photoUrl
             val username = user.username
 
+
+
             onSetTopAppBar {
+                val collapsed = 22
+                val expanded = 28
+
+                val topAppBarTextSize = (collapsed + (expanded - collapsed)*(1-scrollBehavior.state.collapsedFraction)).sp
                 MediumTopAppBar(
                     title = {
                         // Der große, aufgeklappte Header (wird ausgeblendet).
@@ -105,34 +117,36 @@ fun ProfileScreen(
 
                             Text(
                                 text = username,
-                                style = AppTextStyles.HugeHeader
+                                fontFamily = FontFamily.Serif,
+                                fontSize = topAppBarTextSize,
+                                color = Color.White
                             )
 
 
                         }
                     },
+                    colors = TopAppBarDefaults.mediumTopAppBarColors(
+                        containerColor = windowColor,
+                        scrolledContainerColor = windowColor.copy(alpha = 0.8f)
+                    ),
                     actions = {
-                        ElevatedButton(
+                        FilledIconButton(
                             onClick = onNavigateToLogin,
                             modifier = Modifier.size(40.dp),
-                            colors = ButtonDefaults.elevatedButtonColors(
-                                containerColor = Color(0xFFD32F2F),
-                                contentColor = Color.White
-                            ),
-                            shape = RoundedCornerShape(12.dp)
+                            shape = RoundedCornerShape(12.dp), // Deine gewünschte Form mit abgerundeten Ecken
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = Color(0xFFD32F2F), // Roter Hintergrund
+                                contentColor = Color.White          // Weißes Icon
+                            )
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                                contentDescription = "Logout",
-                                tint = Color.White
+                                contentDescription = "Logout"
                             )
                         }
                     },
                     scrollBehavior = scrollBehavior,
-                    colors = TopAppBarDefaults.mediumTopAppBarColors(
-                        containerColor = Color.Transparent,
-                        scrolledContainerColor = Color(0xFF5B231D)
-                    )
+                    modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
                 )
             }
         }

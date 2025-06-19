@@ -24,12 +24,6 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 object AppTextStyles { // Ein object, um sie zu gruppieren
-    val HugeHeader = TextStyle(
-        fontSize = 35.sp,
-        fontFamily = FontFamily.Serif,
-        fontWeight = FontWeight.Bold,
-        color = Color.White
-    )
 
     val CustomHeader = TextStyle(
         fontSize = 25.sp,
