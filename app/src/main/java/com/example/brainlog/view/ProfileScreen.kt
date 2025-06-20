@@ -108,17 +108,6 @@ fun ProfileScreen(
                             horizontalArrangement = Arrangement.Start
 
                         ) {
-                            // Die Logik vom alten ProfileHeader ist jetzt hier drin.
-                            AsyncImage(
-                                model = photoUrl,
-                                contentDescription = "Profilbild von $username",
-                                modifier = Modifier
-                                    .size(30.dp)
-                                    .clip(CircleShape),
-                                contentScale = ContentScale.Crop,
-                                placeholder = painterResource(R.drawable.ic_placeholder_profile),
-                                error = painterResource(R.drawable.ic_placeholder_profile)
-                            )
                             Spacer(modifier = Modifier.width(8.dp))
 
                             Text(
@@ -128,6 +117,18 @@ fun ProfileScreen(
                                 color = Color.White
                             )
                         }
+                    },
+                    navigationIcon = {
+                        AsyncImage(
+                            model = photoUrl,
+                            contentDescription = "Profilbild von $username",
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop,
+                            placeholder = painterResource(R.drawable.ic_placeholder_profile),
+                            error = painterResource(R.drawable.ic_placeholder_profile)
+                        )
                     },
                     colors = TopAppBarDefaults.mediumTopAppBarColors(
                         containerColor = windowColor,
@@ -207,7 +208,7 @@ fun ProfileScreen(
                         } else {
                             FlowRow(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(16.dp, alignment = Alignment.CenterHorizontally),
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
                                 mediaState.mediaItems.forEach { medium ->
