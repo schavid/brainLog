@@ -8,8 +8,9 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 import com.example.brainlog.BuildConfig
 
-private const val RAWG_API_KEY = "b78ef869309a4c068d2a50f69d8f2585"
-private const val RAWG_BASE_URL = BuildConfig.RAWG_GAME_API
+private const val RAWG_API_KEY = BuildConfig.RAWG_GAME_API
+private const val RAWG_BASE_URL = "https://api.rawg.io/api/"
+
 
 object RawgApiClient {
 
