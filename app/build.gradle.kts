@@ -1,3 +1,11 @@
+import java.util.Properties
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -17,6 +25,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Lese beide Werte aus den Properties aus
+        val rawgApiKey: String = localProperties.getProperty("RAWG_GAME_API") ?: ""
+        val tmdbApiKey: String = localProperties.getProperty("TMDB_API_KEY") ?: ""
+
+        // Erstelle für jeden Key ein eigenes BuildConfig-Feld
+        buildConfigField("String", "RAWG_GAME_API", "\"$rawgApiKey\"")
+        buildConfigField("String", "TMDB_API_KEY", "\"$tmdbApiKey\"")
     }
 
     buildTypes {
@@ -37,6 +53,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

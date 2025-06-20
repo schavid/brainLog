@@ -3,12 +3,12 @@ package com.example.brainlog.model
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
-
+import com.example.brainlog.BuildConfig
 
 
 object ApiClient {
     private const val BASE_URL = "https://api.themoviedb.org/3/"
-    private const val TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI2MzdmZTk5Njc5MjQ3OTEzMDRlOGNjODA0OGZiMmRhMiIsIm5iZiI6MTc0NDg4MDUxNC4zNjA5OTk4LCJzdWIiOiI2ODAwYzM4MmYzOWM3MzAxMjVkOTRmZWMiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.VMTfcmkceJ56C30F-k2l6hsxcmg-WVjjri8n8pKnIQo"
+    private const val TOKEN = BuildConfig.TMDB_API_KEY
 
 
     private val client = OkHttpClient.Builder()

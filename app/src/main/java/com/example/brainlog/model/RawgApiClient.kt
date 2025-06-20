@@ -6,10 +6,10 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
+import com.example.brainlog.BuildConfig
 
-// WICHTIG: Ersetze "DEIN_RAWG_API_SCHLÜSSEL" mit deinem echten API-Schlüssel!
 private const val RAWG_API_KEY = "b78ef869309a4c068d2a50f69d8f2585"
-private const val RAWG_BASE_URL = "https://api.rawg.io/api/"
+private const val RAWG_BASE_URL = BuildConfig.RAWG_GAME_API
 
 object RawgApiClient {
 
