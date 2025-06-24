@@ -1,5 +1,7 @@
 # BrainLog Watchlist App
 
+![Projekt-Vorschau](https://github.com/schavid/brainLog/blob/main2/brainlog.jpg)
+
 ## Kurzbeschreibung
 
 BrainLog ist eine persönliche Watchlist-Anwendung für Android. Sie ermöglicht es Benutzern, Filme, TV-Serien und Videospiele zu entdecken, zu einer persönlichen Liste hinzuzufügen und den Status (z.B. "gesehen") zu verwalten.
