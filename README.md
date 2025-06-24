@@ -1,6 +1,6 @@
 # BrainLog Watchlist App
 
-![Projekt-Vorschau]([brainlog.jpg](https://github.com/schavid/brainLog/blob/16be7f6101b15597c7a69048b0e4278df69ca277/brainlog.jpg))
+![Projekt-Vorschau](https://github.com/schavid/brainLog/blob/16be7f6101b15597c7a69048b0e4278df69ca277/brainlog.jpg)
 
 ## Kurzbeschreibung
 
