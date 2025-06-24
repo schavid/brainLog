@@ -18,21 +18,12 @@ BrainLog ist eine persönliche Watchlist-Anwendung für Android. Sie ermöglicht
 
 * **Auswahlmodus:** Durch langes Drücken auf ein Element wird ein Auswahlmodus aktiviert, um mehrere Medien gleichzeitig zu löschen oder deren Status zu ändern.
 
-## Setup & Konfiguration (Für Entwickler)
+## Setup
 
 Um das Projekt lokal zu kompilieren und auszuführen, sind folgende Schritte notwendig:
 
-1. **Firebase-Einrichtung:**
 
-    * Erstelle ein neues Projekt in der [Firebase Console](https://console.firebase.google.com/).
-
-    * Füge eine Android-App mit dem korrekten Package-Namen (`com.example.brainlog`) hinzu.
-
-    * Aktiviere die **Google-Authentifizierung** und **Firestore** als Datenbank.
-
-    * Lade die generierte `google-services.json`-Datei herunter und platziere sie im `app`-Verzeichnis deines Android-Projekts.
-
-2. **API-Schlüssel:**
+1. **API-Schlüssel:**
 
     * Du benötigst einen API-Schlüssel von [The Movie Database (TMDB)](https://www.themoviedb.org/documentation/api) und [RAWG Video Games Database](https://rawg.io/apidocs).
 
@@ -44,9 +35,9 @@ Um das Projekt lokal zu kompilieren und auszuführen, sind folgende Schritte not
       RAWG_GAME_API="DEIN_RAWG_SCHLÜSSEL_HIER"
       ```
 
-3. **SHA-1 Fingerabdruck:**
+2. **SHA-1 Fingerabdruck:**
 
-    * Damit Google Sign-In funktioniert, musst du die **SHA-1-Fingerabdrücke** deiner Entwicklungs- (`debug.keystore`) und (falls vorhanden) Release-Zertifikate in den Firebase-Projekteinstellungen hinterlegen.
+    * Damit Google Sign-In funktioniert, musst du die **SHA-1-Fingerabdrücke** deiner Entwicklungs- (`debug.keystore`).
 
 ## Verwendete Technologien
 
